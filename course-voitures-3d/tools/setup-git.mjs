@@ -61,11 +61,27 @@ function main() {
 
   const entries = parseConfig(readFileSync(CONFIG_FILE, 'utf8'));
   let applied = 0;
+  let kept = 0;
   for (const [section, key, value] of entries) {
-    git(['config', '--local', `${section}.${key}`, value], { quiet: true });
+    const full = `${section}.${key}`;
+    let exists = false;
+    try {
+      git(['config', '--local', '--get', full], { quiet: true });
+      exists = true;
+    } catch {
+      /* la valeur n'existe pas encore */
+    }
+    if (exists) {
+      // On ne réécrit pas un réglage déjà défini : l'utilisateur garde la
+      // main sur sa configuration, le fichier sert seulement de valeurs par
+      // défaut pour un dépôt neuf.
+      kept++;
+      continue;
+    }
+    git(['config', '--local', full, value], { quiet: true });
     applied++;
   }
-  console.log(`✓ ${applied} réglages appliqués depuis .gitconfig-projet`);
+  console.log(`✓ ${applied} réglages appliqués, ${kept} déjà définis (conservés)`);
 
   // Identité : on ne l'écrase pas si l'utilisateur l'a déjà définie.
   for (const key of ['user.name', 'user.email']) {

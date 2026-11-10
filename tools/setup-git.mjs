@@ -45,6 +45,45 @@ function parseConfig(text) {
   return entries;
 }
 
+/**
+ * Clés gérées par ce dépôt : elles sont supprimées avant chaque
+ * application, ce qui rend le script idempotent.
+ *
+ * `type` indique le type de valeur attendu par Git. On l'explicite car
+ * Git refuse silencieusement certaines valeurs : un booléen invalide
+ * (`merge` au lieu de `always`) rend ensuite *toutes* les commandes
+ * Git inutilisables.
+ */
+const MANAGED = {
+  'core.autocrlf': 'bool',
+  'core.safecrlf': 'bool',
+  'core.quotepath': 'bool',
+  'core.ignorecase': 'bool',
+  'core.compression': 'int',
+  'init.defaultbranch': 'string',
+  'branch.rebase': 'bool',
+  'branch.autosetupmerge': 'string',
+  'branch.autosetuprebase': 'string',
+  'merge.conflictstyle': 'string',
+  'diff.renames': 'string',
+  'diff.algorithm': 'string',
+  'diff.colormoved': 'string',
+  'push.default': 'string',
+  'push.followtags': 'bool',
+  'push.autosetupremote': 'bool',
+  'pull.ff': 'string',
+  'fetch.prune': 'bool',
+  'fetch.prunetags': 'bool',
+  'rebase.autostash': 'bool',
+  'rebase.updaterefs': 'bool',
+  'rerere.enabled': 'bool',
+  'rerere.autoupdate': 'bool',
+  'tag.sort': 'string',
+  'help.autocorrect': 'string',
+};
+
+const MANAGED_KEYS = Object.keys(MANAGED);
+
 function main() {
   if (!existsSync(CONFIG_FILE)) {
     console.error(`Configuration introuvable : ${CONFIG_FILE}`);
@@ -57,6 +96,19 @@ function main() {
   } catch {
     git(['init', '-b', 'main']);
     console.log('✓ Dépôt initialisé (branche main)');
+  }
+
+  // Nettoyage : on retire les clés gérées pour repartir d'une base propre.
+  // Cela rend le script idempotent : une clé devenue inutile disparaît
+  // au lieu de subsister en doublon.
+  let removed = 0;
+  for (const key of MANAGED_KEYS) {
+    try {
+      git(['config', '--local', '--unset-all', key], { quiet: true });
+      removed++;
+    } catch {
+      /* la clé n'était pas présente */
+    }
   }
 
   const entries = parseConfig(readFileSync(CONFIG_FILE, 'utf8'));

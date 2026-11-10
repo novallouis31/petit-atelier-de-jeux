@@ -32,6 +32,7 @@ export const AI_LEVELS = {
     gain: 1.85,         // gain de direction
     damp: 0.34,         // amortissement du lacet
     line: 0.30,         // décalage vers la ligne de course
+    cross: 0.05,        // gain de correction latérale
     lookK: 0.50,        // anticipation (proportionnelle à la vitesse)
     wobble: 0.05,       // légère irrégularité, évite deux IA synchronisées
     safety: 0.86,       // marge de sécurité dans les virages
@@ -45,6 +46,7 @@ export const AI_LEVELS = {
     gain: 1.95,
     damp: 0.33,
     line: 0.42,
+    cross: 0.05,
     lookK: 0.45,
     wobble: 0.03,
     safety: 0.88,
@@ -58,6 +60,7 @@ export const AI_LEVELS = {
     gain: 2.05,
     damp: 0.32,
     line: 0.50,
+    cross: 0.06,
     lookK: 0.42,
     wobble: 0.022,
     safety: 0.92,
@@ -305,8 +308,12 @@ export function aiControls(car, ctx, dt) {
      On corrige l'orientation pour ramener la voiture vers la ligne de
      course. La correction est proportionnelle à l'écart divisé par la
      vitesse (comme un contrôleur Stanley) : elle reste efficace à basse
-     vitesse sans saturer la direction à grande vitesse. */
-  const corr = clamp((latErr * level.line) / Math.max(5, absU), -0.22, 0.22);
+     vitesse sans saturer la direction à grande vitesse.
+
+     Le gain `cross` est volontairement faible : le suivi de trajectoire
+     (pure pursuit) fait déjà l'essentiel du travail, et une correction
+     latérale trop forte ferait osciller la voiture d'un bord à l'autre. */
+  const corr = clamp((latErr * level.cross) / Math.max(5, absU), -0.22, 0.22);
   err -= corr;
 
   // Léger flottement : évite deux IA parfaitement synchronisées.
@@ -315,12 +322,16 @@ export function aiControls(car, ctx, dt) {
   let steer = clamp(err * level.gain - car.r * level.damp, -1, 1);
 
   /* ---- contre-braquage ----
-     Quand l'arrière décroche vraiment, on braque à contre-sens pour
-     prendre le virtuose au lieu de partir en tête-à-queue. */
+     Quand l'arrière décroche vraiment (glissement important), on braque
+     dans le sens du glissement pour le rattraper au lieu de partir en
+     tête-à-queue.
+
+     `slipR > 0` signifie que l'essieu arrière glisse vers la DROITE de la
+     voiture : il faut donc braquer à droite (commande positive). */
   const slipR = car.slipR;
   const excess = Math.abs(slipR) - 0.3;
   if (excess > 0 && absU > 6) {
-    steer = clamp(steer - sign(slipR) * excess * 2.2, -1, 1);
+    steer = clamp(steer + sign(slipR) * excess * 2.2, -1, 1);
   }
 
   st.lastSteer = steer;

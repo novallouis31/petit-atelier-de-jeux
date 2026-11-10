@@ -1,5 +1,9 @@
 # Configuration Git locale du projet
-# (git config --local, appliqué automatiquement par tools/setup-git.mjs)
+# (git config --local, appliquée automatiquement par tools/setup-git.mjs)
+#
+# Ces valeurs sont des VALEURS PAR DÉFAUT : setup-git.mjs n'écrase jamais un
+# réglage déjà présent dans .git/config. Relancer le script sur un dépôt
+# configuré ne change donc rien ; sur un dépôt neuf, il applique ce fichier.
 
 [core]
 	# Les fins de ligne sont normalisées par .gitattributes.
