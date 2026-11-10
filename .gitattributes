@@ -1,0 +1,29 @@
+# Normalisation : le dépôt stocke du LF, l'arborescence de travail aussi.
+* text=auto eol=lf
+
+# Types explicitement textuels
+*.html   text eol=lf
+*.css    text eol=lf
+*.js     text eol=lf
+*.mjs    text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.txt    text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+
+# Types binaires : ne jamais toucher
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.webp   binary
+*.ico    binary
+*.mp3    binary
+*.wav    binary
+*.ogg    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.pdf    binary
+*.zip    binary

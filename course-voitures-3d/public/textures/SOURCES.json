@@ -1,0 +1,63 @@
+[
+  {
+    "asset": "asphalt_02",
+    "maps": [
+      "diff",
+      "nrm",
+      "rough"
+    ],
+    "resolution": "2k",
+    "source": "https://polyhaven.com/a/asphalt_02",
+    "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "worn_asphalt",
+    "maps": [
+      "diff",
+      "nrm"
+    ],
+    "resolution": "2k",
+    "source": "https://polyhaven.com/a/worn_asphalt",
+    "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "grass_ground",
+    "maps": [
+      "diff",
+      "nrm"
+    ],
+    "resolution": "2k",
+    "source": "https://polyhaven.com/a/grass_ground",
+    "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "gravel_road",
+    "maps": [
+      "diff",
+      "nrm"
+    ],
+    "resolution": "1k",
+    "source": "https://polyhaven.com/a/gravel_road",
+    "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "concrete",
+    "maps": [
+      "diff",
+      "nrm",
+      "rough"
+    ],
+    "resolution": "1k",
+    "source": "https://polyhaven.com/a/concrete",
+    "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "checkered_pavement_tiles",
+    "maps": [
+      "diff"
+    ],
+    "resolution": "1k",
+    "source": "https://polyhaven.com/a/checkered_pavement_tiles",
+    "license": "CC0 (domaine public)"
+  }
+]

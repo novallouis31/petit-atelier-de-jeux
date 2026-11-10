@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Petites Voitures — Grand Prix des Genêts</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="Jeu de course de petites voitures en vue du dessus"></canvas>
+
+  <!-- ===================== HUD ===================== -->
+  <div class="hud" id="hud">
+    <div class="hud-side left" id="hudLeft">
+      <div class="card p1" id="card-0">
+        <div class="card-top">
+          <span class="swatch"></span>
+          <span class="who" id="who-0">JOUEUR 1</span>
+          <span class="pos" id="pos-0">1<small>er</small></span>
+        </div>
+        <div class="card-main">
+          <span class="speed"><b id="speed-0">0</b><small>km/h</small></span>
+          <span class="lap" id="lap-0">Tour 1/3</span>
+        </div>
+        <div class="card-bottom">
+          <span>Meilleur</span><b id="best-0">—</b>
+          <span class="last" id="last-0"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="center-hud">
+      <div class="timer" id="raceTime">0:00.00</div>
+      <div class="race-sub" id="raceSub">3 TOURS · 2 VOITURES</div>
+    </div>
+
+    <div class="hud-side right" id="hudRight">
+      <div class="card p2" id="card-1">
+        <div class="card-top">
+          <span class="swatch"></span>
+          <span class="who" id="who-1">JOUEUR 2</span>
+          <span class="pos" id="pos-1">2<small>e</small></span>
+        </div>
+        <div class="card-main">
+          <span class="speed"><b id="speed-1">0</b><small>km/h</small></span>
+          <span class="lap" id="lap-1">Tour 1/3</span>
+        </div>
+        <div class="card-bottom">
+          <span>Meilleur</span><b id="best-1">—</b>
+          <span class="last" id="last-1"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-board hidden" id="aiBoard">
+      <div class="card ai p3 hidden" id="card-2">
+        <div class="card-top">
+          <span class="swatch"></span>
+          <span class="who" id="who-2">IA 1</span>
+          <span class="pos" id="pos-2">3<small>e</small></span>
+        </div>
+        <div class="card-main">
+          <span class="speed"><b id="speed-2">0</b><small>km/h</small></span>
+          <span class="lap" id="lap-2">Tour 1/3</span>
+        </div>
+        <div class="card-bottom">
+          <span>Meilleur</span><b id="best-2">—</b>
+          <span class="last" id="last-2"></span>
+        </div>
+      </div>
+
+      <div class="card ai p4 hidden" id="card-3">
+        <div class="card-top">
+          <span class="swatch"></span>
+          <span class="who" id="who-3">IA 2</span>
+          <span class="pos" id="pos-3">4<small>e</small></span>
+        </div>
+        <div class="card-main">
+          <span class="speed"><b id="speed-3">0</b><small>km/h</small></span>
+          <span class="lap" id="lap-3">Tour 1/3</span>
+        </div>
+        <div class="card-bottom">
+          <span>Meilleur</span><b id="best-3">—</b>
+          <span class="last" id="last-3"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="countdown hidden" id="countdown"><span id="countdownText">3</span></div>
+  <div class="flash hidden" id="flash"></div>
+  <div class="toast hidden" id="toast"></div>
+
+  <div class="footer-hint" id="footerHint">
+    <span><b>Flèches</b> Joueur 1</span>
+    <span><b>ZQSD / WASD</b> Joueur 2</span>
+    <span><b>Espace / E</b> frein à main</span>
+    <span><b>R</b> recommencer</span>
+    <span><b>P</b> pause</span>
+    <span><b>M</b> son</span>
+  </div>
+
+  <!-- ===================== MENU ===================== -->
+  <div class="overlay" id="overlay">
+    <section class="panel menu-panel" id="panelMenu">
+      <p class="kicker">COURSE LOCALE <span class="sep">/</span> 2 À 4 VOITURES <span class="sep">/</span> 3 TOURS</p>
+      <h1>Petites<br><em>Voitures</em></h1>
+      <p class="lede">
+        Le Grand Prix des Genêts. Un circuit sinueux, deux à quatre petits bolides
+        et une physique qui ne pardonne pas : freinez tard, dosez l'accélérateur et
+        gardez la trajectoire. Les voitures 3 et 4 sont pilotées par l'ordinateur.
+      </p>
+
+      <div class="ctrl-grid">
+        <div class="ctrl p1">
+          <div class="ctrl-head"><span class="swatch"></span>JOUEUR 1</div>
+          <div class="keyset">
+            <span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span>
+          </div>
+          <p>Accélérer · freiner · tourner</p>
+          <p class="sub"><span class="key wide">Espace</span> frein à main</p>
+        </div>
+        <div class="ctrl p2">
+          <div class="ctrl-head"><span class="swatch"></span>JOUEUR 2</div>
+          <div class="keyset">
+            <span class="key">Z</span><span class="key">Q</span><span class="key">S</span><span class="key">D</span>
+          </div>
+          <p>Accélérer · freiner · tourner</p>
+          <p class="sub"><span class="key wide">E</span> frein à main · <span class="tiny">WASD accepté</span></p>
+        </div>
+      </div>
+
+      <div class="setup">
+        <div class="setup-block">
+          <span class="setup-label">Voitures en piste</span>
+          <div class="seg" id="carCount" role="group" aria-label="Nombre de voitures">
+            <button class="seg-btn active" type="button" data-cars="2">2</button>
+            <button class="seg-btn" type="button" data-cars="3">3</button>
+            <button class="seg-btn" type="button" data-cars="4">4</button>
+          </div>
+          <p class="setup-note" id="setupNote">Duel local à deux joueurs.</p>
+        </div>
+        <div class="setup-block">
+          <span class="setup-label">Niveau des adversaires</span>
+          <div class="seg" id="aiLevel" role="group" aria-label="Niveau de l'ordinateur">
+            <button class="seg-btn" type="button" data-level="calme">Calme</button>
+            <button class="seg-btn active" type="button" data-level="confirme">Confirmé</button>
+            <button class="seg-btn" type="button" data-level="expert">Expert</button>
+          </div>
+          <p class="setup-note" id="aiNote">Utilisé dès qu'une voiture IA est en piste.</p>
+        </div>
+      </div>
+
+      <div class="setup-block setup-tracks">
+        <span class="setup-label">Circuit</span>
+        <div class="track-grid" id="trackGrid" role="group" aria-label="Choix du circuit">
+          <button class="track-btn active" type="button" data-track="genets">
+            <span class="track-thumb" data-thumb="genets"></span>
+            <span class="track-label">Genêts</span>
+          </button>
+          <button class="track-btn" type="button" data-track="aiguille">
+            <span class="track-thumb" data-thumb="aiguille"></span>
+            <span class="track-label">Aiguille</span>
+          </button>
+          <button class="track-btn" type="button" data-track="cigogne">
+            <span class="track-thumb" data-thumb="cigogne"></span>
+            <span class="track-label">Cigogne</span>
+          </button>
+          <button class="track-btn" type="button" data-track="escargot">
+            <span class="track-thumb" data-thumb="escargot"></span>
+            <span class="track-label">Escargot</span>
+          </button>
+          <button class="track-btn" type="button" data-track="onde">
+            <span class="track-thumb" data-thumb="onde"></span>
+            <span class="track-label">Onde</span>
+          </button>
+        </div>
+        <p class="setup-note" id="trackNote"></p>
+        <p class="setup-stats" id="trackStats"></p>
+      </div>
+
+      <div class="menu-actions">
+        <button class="primary" id="btnStart">Démarrer la course <kbd>Entrée</kbd></button>
+      </div>
+      <p class="hint"><b>R</b> recommencer · <b>P</b> pause · <b>M</b> couper le son</p>
+    </section>
+
+    <!-- ===================== PAUSE ===================== -->
+    <section class="panel compact hidden" id="panelPause">
+      <p class="kicker">COURSE EN PAUSE</p>
+      <h2>Stand-by</h2>
+      <p class="lede">Les moteurs tournent au ralenti. Reprenez quand vous voulez.</p>
+      <div class="actions">
+        <button class="primary" id="btnResume">Reprendre <kbd>P</kbd></button>
+        <button class="ghost" id="btnRestartPause">Recommencer <kbd>R</kbd></button>
+      </div>
+    </section>
+
+    <!-- ===================== RÉSULTAT ===================== -->
+    <section class="panel compact hidden" id="panelResult">
+      <p class="kicker" id="resultKicker">DAMIER</p>
+      <h2 id="resultTitle">Joueur 1 gagne</h2>
+      <p class="lede" id="resultMsg"></p>
+      <div class="result-grid" id="resultGrid"></div>
+      <div class="actions">
+        <button class="primary" id="btnRestart">Rejouer <kbd>R</kbd></button>
+        <button class="ghost" id="btnMenu">Menu</button>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="js/world.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+<script src="js/bench.js"></script>
+<script>
+  // Le banc est optionnel : s'il ne se charge pas, le jeu fonctionne quand même.
+  window.__benchSchedule();
+</script>
+</body>
+</html>

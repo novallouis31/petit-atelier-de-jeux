@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Séléné 7 — Atterrisseur planétaire</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" aria-label="Jeu d'atterrissage spatial en vue de côté"></canvas>
+
+  <div id="overlay" class="overlay">
+    <!-- ÉCRAN TITRE -->
+    <section class="panel" id="panelTitle">
+      <p class="eyebrow">MISSION SELENE-7 <span class="dot">•</span> ATTERRISSEUR PLANÉTAIRE</p>
+      <h1>Atterrisseur<br><span>planétaire</span></h1>
+      <p class="lede">
+        Choisissez un monde, un vaisseau, puis posez les deux trains au centre de la zone.
+        Vide, ténue ou épaisse : l'atmosphère change la gravité ressentie, le freinage
+        et votre marge d'erreur.
+      </p>
+
+      <div class="controls">
+        <div class="keyrow">
+          <span class="key">←</span>
+          <span class="key">→</span>
+          <span class="key wide">Espace</span>
+        </div>
+        <div class="keydesc">
+          <span>Poussée à gauche / à droite</span>
+          <span>Les deux propulseurs</span>
+        </div>
+      </div>
+
+      <h3 class="section-label">Difficulté</h3>
+      <div class="diffgrid" id="titleDiff">
+        <button class="diff" data-diff="easy">
+          <span class="diff-name">Facile</span>
+          <span class="diff-meta">Carburant +25 % · zone large</span>
+        </button>
+        <button class="diff" data-diff="normal">
+          <span class="diff-name">Normal <em>recommandé</em></span>
+          <span class="diff-meta">Référence · zone 44 m</span>
+        </button>
+        <button class="diff" data-diff="hard">
+          <span class="diff-name">Difficile</span>
+          <span class="diff-meta">Carburant -20 % · zone 30 m</span>
+        </button>
+      </div>
+
+      <div class="missionbar">
+        <div class="mb-item">
+          <span>Monde</span>
+          <strong id="sumPlanet">Lune</strong>
+        </div>
+        <div class="mb-item">
+          <span>Vaisseau</span>
+          <strong id="sumShip">Classique</strong>
+        </div>
+        <div class="mb-item">
+          <span>Atmosphère</span>
+          <strong id="sumAtmo">Vide</strong>
+        </div>
+        <button class="primary small" id="btnConfig">Personnaliser la mission <em>C</em></button>
+      </div>
+
+      <p class="hint hint-inline">Choisissez le monde, la densité de l'atmosphère et le vaisseau avant de décoller.</p>
+
+      <div class="launchrow">
+        <button class="primary big" id="btnLaunch">Décoller <em>Entrée</em></button>
+      </div>
+
+      <p class="hint">Touches <b>1</b> <b>2</b> <b>3</b> difficulté · <b>C</b> configuration · <b>I</b> inverser ←/→ · <b>M</b> couper le son</p>
+      <p class="best" id="bestTitle"></p>
+    </section>
+
+    <!-- CONFIGURATION -->
+    <section class="panel hidden" id="panelConfig">
+      <p class="eyebrow">CONFIGURATION DE LA MISSION</p>
+      <h2>Personnaliser</h2>
+      <p class="lede">Les presets donnent des comportements distincts. Le mode personnalisé
+        agit directement sur la gravité, l'atmosphère et les caractéristiques du vaisseau.</p>
+
+      <div class="cfg-block">
+        <h3 class="section-label">Monde</h3>
+        <div class="pickgrid" id="planetCards"></div>
+        <p class="desc" id="planetDesc"></p>
+        <div class="sliders hidden" id="planetCustom">
+          <label>
+            <span>Gravité <output id="gravOut">2,50</output> m/s²</span>
+            <input type="range" id="gravRange" min="0.4" max="12" step="0.1" value="2.5">
+          </label>
+          <label>
+            <span>Densité atmosphérique <output id="densOut">0,30</output> kg/m³</span>
+            <input type="range" id="densRange" min="0" max="6" step="0.05" value="0.3">
+          </label>
+        </div>
+      </div>
+
+      <div class="cfg-block">
+        <h3 class="section-label">Vaisseau</h3>
+        <div class="pickgrid" id="shipCards"></div>
+        <p class="desc" id="shipDesc"></p>
+        <div class="sliders hidden" id="shipCustom">
+          <label>
+            <span>Masse à sec <output id="massOut">850</output> kg</span>
+            <input type="range" id="massRange" min="400" max="2000" step="10" value="850">
+          </label>
+          <label>
+            <span>Poussée par propulseur <output id="thrustOut">3000</output> N</span>
+            <input type="range" id="thrustRange" min="1200" max="7000" step="50" value="3000">
+          </label>
+          <label>
+            <span>Carburant <output id="fuelOut">92</output> kg</span>
+            <input type="range" id="fuelRange" min="40" max="220" step="2" value="92">
+          </label>
+        </div>
+        <p class="statsline" id="shipStats"></p>
+      </div>
+
+      <div class="cfg-block">
+        <h3 class="section-label">Difficulté</h3>
+        <div class="diffgrid compact" id="configDiff">
+          <button class="diff" data-diff="easy">
+            <span class="diff-name">Facile</span>
+            <span class="diff-meta">Zone 64 m</span>
+          </button>
+          <button class="diff" data-diff="normal">
+            <span class="diff-name">Normal</span>
+            <span class="diff-meta">Zone 44 m</span>
+          </button>
+          <button class="diff" data-diff="hard">
+            <span class="diff-name">Difficile</span>
+            <span class="diff-meta">Zone 30 m</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="summary" id="configSummary"></p>
+
+      <div class="actions">
+        <button class="ghost" id="btnConfigBack">Retour (Échap)</button>
+        <button class="primary" id="btnConfigLaunch">Décoller</button>
+      </div>
+    </section>
+
+    <!-- PAUSE -->
+    <section class="panel compact hidden" id="panelPause">
+      <p class="eyebrow">MISSION EN SUSPENS</p>
+      <h2>Pause</h2>
+      <p class="lede">Le vaisseau est stabilisé en orbite basse. Enfin… presque.</p>
+      <p class="hint"><b>P</b> ou <b>Échap</b> pour reprendre · <b>R</b> pour recommencer la mission</p>
+      <div class="actions">
+        <button class="ghost" id="btnPauseMenu">Menu principal</button>
+        <button class="primary" id="btnResume">Reprendre (P)</button>
+      </div>
+    </section>
+
+    <!-- RÉSULTAT -->
+    <section class="panel compact hidden" id="panelResult">
+      <p class="eyebrow" id="resultEyebrow">FIN DE MISSION</p>
+      <h2 id="resultTitle">Atterrissage confirmé</h2>
+      <p class="lede" id="resultMsg"></p>
+      <div class="stats" id="resultStats"></div>
+      <div class="scorebox">
+        <div><span>SCORE</span><strong id="resultScore">0</strong></div>
+        <div><span>RECORD</span><strong id="resultBest">0</strong></div>
+      </div>
+      <p class="hint"><b>N</b> nouvelle mission · <b>R</b> rejouer celle-ci · <b>Échap</b> menu principal</p>
+      <div class="actions">
+        <button class="ghost" id="btnResultMenu">Menu principal</button>
+        <button class="ghost" id="btnRetry">Rejouer (R)</button>
+        <button class="primary" id="btnNext">Nouvelle mission (N)</button>
+      </div>
+    </section>
+  </div>
+
+  <button id="invertBtn" class="hud-toggle" type="button" title="Inverser la poussée gauche / droite (I)">
+    <span class="toggle-glyph" aria-hidden="true">⇄</span>
+    <span id="invertLabel">Propulseurs : normaux</span>
+  </button>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Dépendances
+node_modules/
+.pnp
+.pnp.js
+.npm/
+
+# Builds et caches
+dist/
+build/
+.vite/
+.cache/
+*.tsbuildinfo
+.eslintcache
+
+# Environnement local
+.env
+.env.local
+.env.*.local
+
+# Fichiers de sauvegarde des éditeurs
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Journaux
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Note : les textures CC0 du projet 3D (course-voitures-3d/public/textures/)
+# sont volontairement versionnées — voir course-voitures-3d/.gitignore.

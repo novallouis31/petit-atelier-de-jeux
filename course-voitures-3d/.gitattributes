@@ -1,0 +1,21 @@
+# Normalisation des fins de ligne
+* text=auto eol=lf
+
+# Textes
+*.js   text diff=javascript
+*.mjs  text diff=javascript
+*.json text
+*.css  text
+*.html text
+*.md   text
+*.txt  text
+
+# Binaires
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.webp binary
+*.glb  binary
+*.gltf binary
+*.hdr  binary
+*.exr  binary
