@@ -9,6 +9,22 @@ ni build (le projet 3D est le seul à utiliser `three.js`).
 | **Petites Voitures** | [`course-voitures/`](course-voitures/) | Jeu de course 2D, vue du dessus, 2 à 4 voitures |
 | **Petites Voitures 3D** | [`course-voitures-3d/`](course-voitures-3d/) | Moteur et circuits 3D (`three.js`) — en cours |
 
+## Circuits de course
+
+Le jeu 2D propose **cinq circuits**, tous validés par un banc d'essai qui fait
+courir l'IA dessus :
+
+| Circuit | Caractère | Longueur | Rayon min |
+| --- | --- | --- | --- |
+| Boucle des Genêts | rapide, harmonieux, deux longues courbes | 533 m | 40 m |
+| L'Aiguille | boucle étirée, deux épingles serrées | 557 m | 23 m |
+| La Cigogne | trois grands lobes | 549 m | 46 m |
+| L'Escargot | quatre bosses, tracé technique en lacets | 568 m | 44 m |
+| L'Onde | sinueux, en permanence dans les esses | 552 m | 47 m |
+
+Le circuit se choisit dans le menu de départ ; le verdict du banc d'essai
+(temps au tour, rayon minimal, hors piste) y est affiché.
+
 ## Lancer un projet
 
 Les deux jeux 2D n'ont **aucune dépendance** : ouvrez simplement le fichier
