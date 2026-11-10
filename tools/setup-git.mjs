@@ -54,9 +54,22 @@ function parseConfig(text) {
  * (`merge` au lieu de `always`) rend ensuite *toutes* les commandes
  * Git inutilisables.
  */
+/**
+ * Clés gérées par ce dépôt : elles sont supprimées avant chaque
+ * application, ce qui rend le script idempotent.
+ *
+ * `type` indique le type de valeur attendu par Git. On l'explicite car
+ * Git refuse silencieusement certaines valeurs : un booléen invalide
+ * (`merge` au lieu de `always`) rend ensuite *toutes* les commandes
+ * Git inutilisables.
+ *
+ * Note : `git config --type=` n'accepte que `bool`, `int`, `bool-or-int`,
+ * `path` et `expiry-date`. Les autres valeurs sont écrites sans option
+ * `--type`, en laissant Git déduire le type.
+ */
 const MANAGED = {
   'core.autocrlf': 'bool',
-  'core.safecrlf': 'bool',
+  'core.safecrlf': 'enum',
   'core.quotepath': 'bool',
   'core.ignorecase': 'bool',
   'core.compression': 'int',
@@ -81,6 +94,9 @@ const MANAGED = {
   'tag.sort': 'string',
   'help.autocorrect': 'string',
 };
+
+/** Types acceptés par `git config --type=`. */
+const GIT_TYPES = new Set(['bool', 'int', 'bool-or-int', 'path', 'expiry-date']);
 
 const MANAGED_KEYS = Object.keys(MANAGED);
 
@@ -116,20 +132,19 @@ function main() {
   const failed = [];
 
   for (const [section, key, value] of entries) {
+    const full = `${section}.${key}`;
+    const type = MANAGED[full] || 'string';
     try {
-      // On valide d'abord : `git config` refuse les valeurs mal formées
-      // (un booléen invalide casse toutes les commandes Git suivantes).
-      git(['config', '--local', '--type=bool', `${section}.${key}`, value], {
-        quiet: true,
-      });
+      // On écrit avec le type attendu quand Git en accepte un : Git refuse
+      // les valeurs mal formées, et une valeur invalide casse ensuite
+      // toutes les commandes Git. Les autres types sont écrits tels quels.
+      const args = ['config', '--local'];
+      if (GIT_TYPES.has(type)) args.push(`--type=${type}`);
+      args.push(full, value);
+      git(args, { quiet: true });
     } catch {
-      // Ce n'est pas un booléen : on l'écrit tel quel.
-      try {
-        git(['config', '--local', `${section}.${key}`, value], { quiet: true });
-      } catch {
-        failed.push(`${section}.${key} = ${value}`);
-        continue;
-      }
+      failed.push(`${full} = ${value} (attendu : ${type})`);
+      continue;
     }
     applied++;
   }

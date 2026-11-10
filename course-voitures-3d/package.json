@@ -16,7 +16,7 @@
     "bench": "node tools/bench.mjs",
     "fetch:textures": "node tools/fetch-textures.mjs",
     "optimize:textures": "node tools/optimize-textures.mjs",
-    "setup:git": "node tools/setup-git.mjs"
+    "setup:git": "node ../tools/setup-git.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
