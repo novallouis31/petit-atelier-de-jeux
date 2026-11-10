@@ -25,8 +25,9 @@ dans un navigateur récent.
 
 - **Voitures en piste** : 2, 3 ou 4 ;
 - **Niveau des adversaires** : *Calme*, *Confirmé*, *Expert* ;
-- **Circuit** : *Boucle des Genêts* ou *La Cigogne* ;
-- l'écran affiche les statistiques du circuit (longueur, largeur, nombre de points).
+- **Circuit** : *Genêt*, *Aiguille*, *Cigogne*, *Escargot*, *Onde* ;
+- l'écran affiche les statistiques du circuit (longueur, largeur, nombre de points)
+  et le verdict du banc d'essai IA (`Validé par IA · tour 30.7 · rayon min 40 m · très propre`).
 
 ## Physique
 

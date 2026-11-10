@@ -312,10 +312,10 @@ export function buildTrack(def) {
     }
 
     const segLen = Math.hypot(proj.vx, proj.vy, proj.vz) || 1;
-    // Axe « droite » horizontal du tronçon.
-    const rx = -proj.vz / segLen;
-    const rz = proj.vx / segLen;
-    const lateral = (x - proj.px) * rx + (z - proj.pz) * rz;
+    // Axe « droite » horizontal du tronçon (pour mesurer l'écart latéral).
+    const sideX = -proj.vz / segLen;
+    const sideZ = proj.vx / segLen;
+    const lateral = (x - proj.px) * sideX + (z - proj.pz) * sideZ;
     const half = lerp(pts[proj.i0].half, pts[proj.i1].half, proj.t);
 
     // Normale de la route au point projeté (interpolée).
