@@ -371,8 +371,14 @@ export function stepCar(car, dt) {
   const dragC = off ? PHYS.offDrag : PHYS.drag;
 
   fxBody -= sign(car.u) * rolling * clamp(Math.abs(car.u) / 1.5, 0, 1);
-  fxBody -= car.u * speed2 * dragC;
-  fyBody -= car.v * Math.abs(car.v) * 0.35;
+  // Traînée aérodynamique : elle est proportionnelle au CARRÉ de la vitesse
+  // (F = ½·ρ·Cd·A·v²). On l'applique dans le sens opposé au mouvement.
+  const speed = Math.hypot(car.u, car.v);
+  if (speed > 0.05) {
+    const dragForce = dragC * speed * speed;
+    fxBody -= (car.u / speed) * dragForce;
+    fyBody -= (car.v / speed) * dragForce;
+  }
 
   car.ax = fxBody / m;
   car.ay = fyBody / m;

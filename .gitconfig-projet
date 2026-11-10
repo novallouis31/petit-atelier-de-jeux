@@ -1,0 +1,65 @@
+# Configuration Git du dépôt
+# (appliquée avec `git config --local` par tools/setup-git.mjs)
+#
+# Ces réglages sont propres au dépôt : ils ne touchent pas la configuration
+# globale de la machine.
+
+[core]
+	# Les fins de ligne sont normalisées par .gitattributes (LF partout).
+	autocrlf = false
+	# Signale les conversions qui modifieraient le contenu.
+	safecrlf = warn
+	# Détecte automatiquement les fichiers binaires.
+	# Affiche les chemins UTF-8 tels quels (sinon Git les échappe).
+	quotepath = false
+	# Windows est insensible à la casse : on désactive pour éviter que Git
+	# ignore des fichiers ne différant que par la casse.
+	ignorecase = false
+	# Compression des objets lors de l'empaquetage.
+	compression = 2
+
+[init]
+	defaultBranch = main
+
+[branch]
+	# Rebaser plutôt que créer des commits de fusion.
+	rebase = true
+	# Mise de côté automatique pendant un rebase.
+	autoSetupRebase = always
+
+[merge]
+	conflictstyle = zdiff3
+
+[diff]
+	# Les réorganisations de code sont plus faciles à lire.
+	renames = copies
+	algorithm = histogram
+	colorMoved = zebra
+
+[push]
+	default = current
+	followTags = true
+	# Crée la branche distante au premier push si elle n'existe pas.
+	autoSetupRemote = true
+
+[pull]
+	# Ne crée pas de commit de fusion silencieux.
+	ff = only
+
+[fetch]
+	prune = true
+	pruneTags = true
+
+[rebase]
+	autoStash = true
+	updateRefs = true
+
+[rerere]
+	enabled = true
+	autoupdate = true
+
+[tag]
+	sort = version:refname
+
+[help]
+	autocorrect = prompt

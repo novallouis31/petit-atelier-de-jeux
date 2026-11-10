@@ -34,5 +34,21 @@ npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Outils installés localement dans le dépôt (Node, Python, etc.)
+/.tools/
+/bin/
+/vendor/
+
+# Téléchargements manuels effectués à la racine du dépôt
+# (installateurs, archives, index de versions, images brutes)
+/*.zip
+/*.7z
+/*.tar
+/*.tar.gz
+/*.exe
+/*.msi
+/*.bin
+/nodeindex.json
+
 # Note : les textures CC0 du projet 3D (course-voitures-3d/public/textures/)
 # sont volontairement versionnées — voir course-voitures-3d/.gitignore.

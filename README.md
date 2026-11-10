@@ -41,12 +41,36 @@ npm run fetch-textures   # textures CC0 (Poly Haven), ~40 Mo
 ├── selene7/              # Atterrisseur planétaire (jeu complet)
 ├── course-voitures/      # Grand Prix 2D (jeu complet)
 ├── course-voitures-3d/   # Moteur 3D (en développement)
+├── tools/setup-git.mjs   # application de la configuration Git du dépôt
 ├── .gitattributes        # normalisation des fins de ligne
+├── .gitconfig-projet     # réglages Git propres au dépôt
 └── .gitignore
 ```
 
 Chaque projet a son propre `README.md` avec le détail de ses commandes et de sa
 physique.
+
+## Git
+
+La branche de travail est `main`. Le dépôt est configuré de façon identique
+sous Windows, Linux et macOS :
+
+- **`.gitattributes`** normalise les fins de ligne en **LF** dans le dépôt et
+  dans l'arborescence de travail ;
+- **`.gitignore`** exclut `node_modules/`, les caches de build, les journaux et
+  les fichiers d'éditeur ;
+- **`.gitconfig-projet`** décrit les réglages jugés pertinents pour ce dépôt
+  (rebases plutôt que fusions, style de conflit `zdiff3`, `rerere`, détection de
+  casse, chemins UTF-8 non échappés) ;
+- **`tools/setup-git.mjs`** l'applique avec `git config --local` — donc sans
+  toucher à la configuration globale de la machine :
+
+```powershell
+node tools/setup-git.mjs
+```
+
+Le projet 3D embarque le même outillage (`course-voitures-3d/tools/setup-git.mjs`)
+pour rester utilisable de façon autonome.
 
 ## Conventions
 

@@ -228,6 +228,8 @@ export function buildTrack(def) {
     minRadius,
     bounds: { minX, maxX, minZ, maxZ, minY, maxY },
     runoff: def.runoff,
+    // Demi-largeur nominale (la largeur réelle varie le long du tracé).
+    halfWidth: def.width / 2,
   };
 
   /** Échantillon interpolé à l'abscisse curviligne s (0..1). */

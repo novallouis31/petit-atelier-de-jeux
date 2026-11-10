@@ -45,6 +45,8 @@ src/core/mathx.js     utilitaires mathématiques (clamp, lerp, moveTowards…)
 src/core/physics.js   moteur physique du véhicule
 src/core/track.js     construction géométrique d'un circuit
 src/core/tracks.js    catalogue des circuits
+tests/                tests unitaires (node --test)
+docs/architecture.md  pourquoi le projet est découpé ainsi
 public/textures/      textures CC0 (Poly Haven), versionnées
 tools/fetch-textures.mjs       téléchargeur de textures
 tools/optimize-textures.mjs    compression des textures
@@ -53,6 +55,24 @@ tools/setup-git.mjs             application de la configuration Git du projet
 
 `three.js` n'est pas embarqué : il vient de `node_modules` et est résolu par
 Vite au moment du build.
+
+## Architecture
+
+Le principe directeur est simple : **`src/core/` ne contient aucune référence au
+DOM ni à Three.js**. La simulation s'exécute donc sous Node, sans navigateur et
+sans rendu — c'est ce qui rend possible le banc d'essai `npm run bench`.
+
+Le raisonnement complet est dans [`docs/architecture.md`](docs/architecture.md).
+
+## Tests
+
+```powershell
+npm test
+```
+
+Les tests couvrent le comportement observable du modèle physique
+(accélération, freinage, sens de rotation, dérapage au-delà de l'adhérence,
+respect des limites du circuit) et la construction géométrique des circuits.
 
 Les quatre modules de `src/core/` sont **purs** : aucun accès au DOM, ce qui les
 rend utilisables sous Node pour des tests.
@@ -97,4 +117,4 @@ la surface roulable, le sens de parcours et les points de contrôle.
 - [ ] point d'entrée (`index.html` + `src/main.js`) et boucle de rendu ;
 - [ ] interface (HUD, menu, résultats) ;
 - [ ] pilotes automatiques, en transposant `../course-voitures/js/ai.js` ;
-- [ ] tests sous Node des modules `src/core/`.
+- [x] tests sous Node des modules `src/core/`.
