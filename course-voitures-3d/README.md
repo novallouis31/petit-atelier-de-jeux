@@ -13,13 +13,27 @@ circuits, autour de [three.js](https://threejs.org/).
 ```powershell
 cd course-voitures-3d
 npm install
-npm run fetch-textures
+npm run fetch:textures      # textures CC0 (Poly Haven)
+npm run optimize:textures   # compression des textures
 ```
 
-`fetch-textures` télécharge les textures **CC0** de Poly Haven (asphalte,
+Scripts disponibles :
+
+| Script | Rôle |
+| --- | --- |
+| `npm run dev` | serveur de développement Vite |
+| `npm run build` | build de production |
+| `npm run preview` | prévisualisation du build |
+| `npm run fetch:textures` | télécharge les textures Poly Haven (CC0) |
+| `npm run optimize:textures` | compresse les textures téléchargées |
+| `npm run bench` | banc d'essai IA des circuits |
+| `npm test` | tests unitaires (`node --test`) |
+| `npm run setup:git` | applique `.gitconfig-projet` au dépôt courant |
+
+`fetch:textures` télécharge les textures **CC0** de Poly Haven (asphalte,
 gravier, herbe, béton, dalles) dans `public/textures/` — environ 5,6 Mo une fois
-optimisées par `tools/optimize-textures.mjs`. Le catalogue des assets, leurs URL
-et leurs licences sont listés dans `public/textures/SOURCES.json`.
+optimisées par `optimize:textures`. Le catalogue des assets, leurs URL et leurs
+licences sont listés dans `public/textures/SOURCES.json`.
 
 Les textures sont **versionnées** : elles sont régénérables à l'identique, mais
 leur poids reste raisonnable et cela évite un téléchargement à l'installation.
@@ -31,9 +45,14 @@ src/core/mathx.js     utilitaires mathématiques (clamp, lerp, moveTowards…)
 src/core/physics.js   moteur physique du véhicule
 src/core/track.js     construction géométrique d'un circuit
 src/core/tracks.js    catalogue des circuits
-vendor/three/         three.js embarqué (build + quelques modules jsm)
-tools/fetch-textures.mjs   téléchargeur de textures
+public/textures/      textures CC0 (Poly Haven), versionnées
+tools/fetch-textures.mjs       téléchargeur de textures
+tools/optimize-textures.mjs    compression des textures
+tools/setup-git.mjs             application de la configuration Git du projet
 ```
+
+`three.js` n'est pas embarqué : il vient de `node_modules` et est résolu par
+Vite au moment du build.
 
 Les quatre modules de `src/core/` sont **purs** : aucun accès au DOM, ce qui les
 rend utilisables sous Node pour des tests.
