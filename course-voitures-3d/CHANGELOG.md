@@ -7,6 +7,14 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Corrigé
+
+- **La direction à droite était muette.** `KEYMAP` contenait `KeyRight` au
+  lieu de `ArrowRight` — un code `KeyboardEvent` qui n'existe pas. La touche
+  n'était donc jamais enregistrée, sans aucune erreur. La correspondance
+  clavier est désormais dans `src/core/input.js` (module pur, testé sous
+  Node) et un test vérifie que chaque code mappé est un code valide.
+
 ## [0.2.0]
 
 Le jeu est jouable : rendu 3D, interface et course complète.

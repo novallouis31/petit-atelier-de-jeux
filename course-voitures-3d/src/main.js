@@ -13,6 +13,7 @@ import { TRACKS, TRACK_IDS } from './core/tracks.js';
 import { buildTrack } from './core/track.js';
 import { bindTrack } from './core/physics.js';
 import { Race, STEP, TOTAL_LAPS } from './core/race.js';
+import { KEYMAP, readInput as readInputFromKeys, toCarInput } from './core/input.js';
 import { createScene, resizeScene } from './render/scene.js';
 import { buildTrackScene, disposeTrackScene } from './render/trackMesh.js';
 import { buildCar, updateCarMesh, PLAYER_COLORS } from './render/carMesh.js';
@@ -51,33 +52,16 @@ const etat = {
 
 const keys = new Set();
 
-const KEYMAP = {
-  ArrowUp: 'throttle',
-  KeyW: 'throttle',
-  ArrowDown: 'brake',
-  KeyS: 'brake',
-  ArrowLeft: 'left',
-  KeyA: 'left',
-  KeyRight: 'right',
-  KeyD: 'right',
-  Space: 'hand',
-};
-
-/** Lit les commandes du joueur. */
+/**
+ * Lit les commandes du joueur.
+ *
+ * La correspondance clavier est dans `src/core/input.js`, qui est testée
+ * sous Node : une erreur de code y rend une touche muette sans lever
+ * d'erreur, ce qui est exactement le genre de bug que l'on ne voit qu'en
+ * jouant.
+ */
 function readInput() {
-  const throttle = keys.has('ArrowUp') || keys.has('KeyW') ? 1 : 0;
-  const brake = keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0;
-  const left = keys.has('ArrowLeft') || keys.has('KeyA') ? 1 : 0;
-  const right = keys.has('ArrowRight') || keys.has('KeyD') ? 1 : 0;
-  const hand = keys.has('Space');
-
-  // `steer > 0` = vers la droite (convention du projet).
-  return {
-    throttle,
-    brake,
-    steer: right - left,
-    hand,
-  };
+  return toCarInput(readInputFromKeys(keys));
 }
 
 window.addEventListener('keydown', (e) => {
@@ -429,5 +413,12 @@ window.__game = {
       buildCars();
       etat.camera.snap();
     }
+  },
+  /** État des touches et des commandes (diagnostic). */
+  debugEntrees() {
+    return {
+      touches: [...keys],
+      commandes: readInput(),
+    };
   },
 };
