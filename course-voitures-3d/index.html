@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Course 3D — Grand Prix des Genêts</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <!-- ===================== HUD ===================== -->
+  <div class="hud cache" id="hud">
+    <!-- Compteur de vitesse -->
+    <div class="vitesse" id="vitesse">
+      <svg viewBox="0 0 200 200" class="cadran" aria-hidden="true">
+        <circle cx="100" cy="100" r="88" class="fond"/>
+        <circle cx="100" cy="100" r="88" class="progres"
+                id="jauge"/>
+      </svg>
+      <div class="aiguille-contenu">
+        <span class="valeur" id="speed">0</span>
+        <span class="unite">km/h</span>
+      </div>
+    </div>
+
+    <!-- Informations de course -->
+    <div class="infos">
+      <div class="chrono" id="raceTime">0:00.00</div>
+      <div class="sous" id="raceSub">3 TOURS</div>
+      <div class="ligne-info">
+        <span class="case"><b id="lap">Tour 1/3</b></span>
+        <span class="case">Place <b id="place">1</b></span>
+        <span class="case">Meilleur <b id="best">—</b></span>
+      </div>
+    </div>
+
+    <!-- Classement -->
+    <ul class="positions" id="positions"></ul>
+
+    <!-- Mini-carte -->
+    <canvas id="minimap" width="180" height="180" class="minimap"></canvas>
+
+    <!-- Aide -->
+    <div class="aide" id="hint">
+      <span><b>↑</b> accélérer</span>
+      <span><b>↓</b> freiner</span>
+      <span><b>←→</b> diriger</span>
+      <span><b>Espace</b> frein à main</span>
+      <span><b>C</b> caméra</span>
+      <span><b>P</b> pause</span>
+      <span><b>R</b> recommencer</span>
+    </div>
+  </div>
+
+  <!-- ===================== Compte à rebours ===================== -->
+  <div class="cache compte" id="countdown">
+    <span id="countdownText">3</span>
+  </div>
+
+  <div class="cache toast" id="toast"></div>
+
+  <!-- ===================== Menu ===================== -->
+  <div class="overlay" id="overlay">
+    <section class="panneau" id="menu">
+      <p class="sur-titre">COURSE 3D <span class="sep">/</span> 6 CIRCUITS <span class="sep">/</span> 4 VOITURES</p>
+      <h1>Course <em>3D</em></h1>
+      <p class="chapo">
+        Vue par derrière, moteur physique réaliste, six circuits en relief et
+        des adversaires pilotés par une intelligence artificielle. Six circuits,
+        des voitures qui se disputent chaque virage, et une physique qui ne pardonne rien.
+      </p>
+
+      <div class="choix">
+        <div class="bloc">
+          <span class="etiquette">Circuit</span>
+          <div class="pistes" id="trackGrid" role="group" aria-label="Choix du circuit"></div>
+          <p class="note" id="trackNote"></p>
+        </div>
+
+        <div class="bloc">
+          <span class="etiquette">Adversaires</span>
+          <div class="seg" id="aiLevel" role="group" aria-label="Niveau des adversaires">
+            <button class="seg-btn" type="button" data-level="calme">Calme</button>
+            <button class="seg-btn actif" type="button" data-level="confirme">Confirmé</button>
+            <button class="seg-btn" type="button" data-level="expert">Expert</button>
+          </div>
+
+          <span class="etiquette">Voitures</span>
+          <div class="seg" id="carCount" role="group" aria-label="Nombre de voitures">
+            <button class="seg-btn" type="button" data-cars="2">2</button>
+            <button class="seg-btn" type="button" data-cars="3">3</button>
+            <button class="seg-btn actif" type="button" data-cars="4">4</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="principal" id="btnStart" type="button">Démarrer la course <kbd>Entrée</kbd></button>
+      </div>
+      <p class="note-bas">
+        <b>↑↓</b> accélérer / freiner · <b>←→</b> diriger ·
+        <b>Espace</b> frein à main · <b>C</b> caméra · <b>P</b> pause · <b>R</b> recommencer
+      </p>
+    </section>
+
+    <!-- ===================== Pause ===================== -->
+    <section class="panneau compact cache" id="pause">
+      <p class="sur-titre">COURSE EN PAUSE</p>
+      <h2>Stand-by</h2>
+      <p class="chapo">Les moteurs tournent au ralenti. Reprenez quand vous voulez.</p>
+      <div class="actions">
+        <button class="principal" id="btnResume" type="button">Reprendre <kbd>P</kbd></button>
+        <button class="fantome" id="btnRestartPause" type="button">Recommencer</button>
+      </div>
+    </section>
+
+    <!-- ===================== Résultats ===================== -->
+    <section class="panneau compact cache" id="resultat">
+      <p class="sur-titre">DAMIER</p>
+      <h2 id="resultTitle">Résultat</h2>
+      <p class="chapo" id="resultMsg"></p>
+      <div class="classement" id="resultGrid"></div>
+      <div class="actions">
+        <button class="principal" id="btnRestart" type="button">Rejouer <kbd>R</kbd></button>
+        <button class="fantome" id="btnMenu" type="button">Menu</button>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

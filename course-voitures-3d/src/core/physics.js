@@ -87,6 +87,7 @@ export function createCarState(index) {
     ax: 0, ay: 0,
     slipF: 0, slipR: 0,
     fzF: 0, fzR: 0,
+    nx: 0, ny: 1, nz: 0,      // normale de la route (assiette)
     idx: -1,
     progress: 0,
     prevProgress: 0,
@@ -152,6 +153,7 @@ export function resetCar(car, s, lateral) {
   car.ax = 0; car.ay = 0;
   car.slipF = 0; car.slipR = 0;
   car.fzF = 0; car.fzR = 0;
+  car.nx = 0; car.ny = 1; car.nz = 0;
   car.idx = -1;
   car.surface = 0;
   car.onTrack = true;
@@ -442,10 +444,18 @@ export function stepCar(car, dt) {
     }
   }
 
-  /* ---- attitude visuelle (tangage / roulis) ---- */
-  const targetPitch =
-    Math.asin(clamp(-car.ax / 26, -0.22, 0.22)) + Math.asin(clamp(loc2.ty, -1, 1));
-  const targetRoll = loc2.bank + Math.asin(clamp(car.ay / 26, -0.24, 0.24));
+  /* ---- attitude ----
+     La normale de la route est conservée : c'est elle qui détermine
+     l'assiette réelle de la voiture (pente et dévers). Le tangage et le
+     roulis stockés ici ne sont que les composantes *dynamiques* (squat,
+     plongeon, inclinaison dans le virage) ; le rendu les ajoute à
+     l'orientation donnée par la normale. */
+  car.nx = loc2.nx;
+  car.ny = loc2.ny;
+  car.nz = loc2.nz;
+
+  const targetPitch = Math.asin(clamp(car.ax / 26, -0.2, 0.2));
+  const targetRoll = Math.asin(clamp(-car.ay / 26, -0.22, 0.22));
   const k = 1 - Math.exp(-9 * dt);
   car.pitch += (targetPitch - car.pitch) * k;
   car.roll += (targetRoll - car.roll) * k;
