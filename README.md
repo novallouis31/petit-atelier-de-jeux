@@ -7,7 +7,8 @@ ni build (le projet 3D est le seul à utiliser `three.js`).
 | --- | --- | --- |
 | **Séléné 7** | [`selene7/`](selene7/) | Jeu d'atterrissage planétaire 2D, vue de côté |
 | **Petites Voitures** | [`course-voitures/`](course-voitures/) | Jeu de course 2D, vue du dessus, 2 à 4 voitures |
-| **Petites Voitures 3D** | [`course-voitures-3d/`](course-voitures-3d/) | Moteur et circuits 3D (`three.js`) — en cours |
+| **Petites Voitures 3D** | [`course-voitures-3d/`](course-voitures-3d/) | Jeu de course 3D, vue par derrière (`three.js`) — jouable |
+| **Tzolk'in** | [`tzolkin/`](tzolkin/) | Jeu de plateau maya (calendrier à engrenages), moteur complet + extension Tribes & Prophecies optionnelle |
 
 ## Circuits de course
 
@@ -56,7 +57,7 @@ npm run fetch-textures   # textures CC0 (Poly Haven), ~40 Mo
 .
 ├── selene7/              # Atterrisseur planétaire (jeu complet)
 ├── course-voitures/      # Grand Prix 2D (jeu complet)
-├── course-voitures-3d/   # Moteur 3D (en développement)
+├── course-voitures-3d/   # Jeu de course 3D (jeu complet)
 ├── tools/setup-git.mjs   # application de la configuration Git du dépôt
 ├── .gitattributes        # normalisation des fins de ligne
 ├── .gitconfig-projet     # réglages Git propres au dépôt
@@ -85,8 +86,8 @@ sous Windows, Linux et macOS :
 node tools/setup-git.mjs
 ```
 
-Le projet 3D embarque le même outillage (`course-voitures-3d/tools/setup-git.mjs`)
-pour rester utilisable de façon autonome.
+La configuration est unique pour tout le dépôt : le projet 3D l'utilise
+aussi via `npm run setup:git` (qui appelle le script racine).
 
 ## Conventions
 
