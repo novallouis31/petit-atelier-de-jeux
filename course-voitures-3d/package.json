@@ -1,6 +1,6 @@
 {
   "name": "course-voitures-3d",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Jeu de course automobile 3D en vue par derrière : moteur physique réaliste, six circuits et adversaires pilotés par IA.",
   "type": "module",

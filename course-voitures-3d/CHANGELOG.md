@@ -7,7 +7,38 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
-## [0.1.0] — En cours
+## [0.2.0]
+
+Le jeu est jouable : rendu 3D, interface et course complète.
+
+### Ajouté
+
+- **Rendu 3D** : scène éclairée (soleil directionnel avec ombres, lumière
+  hémisphérique, ciel analytique de Preetham), maillage du circuit (route,
+  vibreurs, glissières, terrain, décor, balises), voiture **construite par
+  code**, caméra de poursuite et effets de vitesse.
+- **Effets de vitesse** : flou radial, lignes de fuite, aberration
+  chromatique, vignettage et déformation de l'image en virage, plus
+  l'élargissement du champ de vision avec la vitesse.
+- **Interface** : menu avec vignettes des six circuits, HUD (compteur de
+  vitesse, chronomètre, classement, mini-carte), écran de résultats.
+- **Moteur de course** (`src/core/race.js`) : grille de départ, compte à
+  rebours, tours, classement, arrivée, et mode démonstration où l'IA pilote
+  aussi le joueur.
+- **Tests de rendu** (`tests/render.test.js`) : construction du décor,
+  orientation des triangles, placement de la caméra et de l'interface.
+
+### Corrigé
+
+- Traînée aérodynamique en `v³` au lieu de `v²`.
+- Contre-braquage de l'IA : signe inversé entre les repères 2D et 3D.
+- Route et terrain invisibles : triangles dans le mauvais sens.
+- Terrain éclairé par en dessous : normales inversées.
+- Image délavée : tone mapping et conversion sRGB appliqués deux fois,
+  copie superflue du compositeur, échelle du ciel hors du champ de vision.
+- Voiture noyée dans le décor : la caméra d'ombre ne suivait pas le joueur.
+
+## [0.1.0]
 
 Socle du projet Course 3D.
 
