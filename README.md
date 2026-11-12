@@ -60,6 +60,8 @@ npm run fetch-textures   # textures CC0 (Poly Haven), ~40 Mo
 ├── course-voitures/      # Grand Prix 2D (jeu complet)
 ├── course-voitures-3d/   # Jeu de course 3D (jeu complet)
 ├── tools/setup-git.mjs   # application de la configuration Git du dépôt
+├── tools/publish-github.ps1 # publication du dépôt sur GitHub (PAT)
+├── tools/GITKRAKEN.md    # guide d'utilisation de GitKraken
 ├── .gitattributes        # normalisation des fins de ligne
 ├── .gitconfig-projet     # réglages Git propres au dépôt
 └── .gitignore
@@ -89,6 +91,22 @@ node tools/setup-git.mjs
 
 La configuration est unique pour tout le dépôt : le projet 3D l'utilise
 aussi via `npm run setup:git` (qui appelle le script racine).
+
+### Publier sur GitHub
+
+Le dépôt est piloté avec [GitKraken](https://www.gitkraken.com/). Le guide
+complet (création du Personal Access Token, clone, push, pull request,
+résolution de conflits, dépannage) est dans
+[`tools/GITKRAKEN.md`](tools/GITKRAKEN.md).
+
+```powershell
+# publication (crée le dépôt GitHub s'il n'existe pas)
+powershell -ExecutionPolicy Bypass -File tools\publish-github.ps1 `
+    -Repo petit-atelier-de-jeux -Token ghp_VOTRE_JETON -Tags
+```
+
+Le jeton est stocké chiffré par GitKraken, jamais dans le dépôt ; le script
+vérifie l'absence de secret avant de pousser.
 
 ## Conventions
 
