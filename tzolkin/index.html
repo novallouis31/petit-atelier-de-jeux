@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tzolk'in : le calendrier maya</title>
+  <style>
+    .gears-panel { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important; gap: 2rem !important; justify-items: center !important; padding: 1rem !important; }
+    .gear-wheel, .calendar-wheel { position: relative !important; width: 140px !important; height: 140px !important; border-radius: 50% !important; margin: .5rem !important; }
+    .calendar-wheel { width: 160px !important; height: 160px !important; }
+    .gear-slot, .cal-day { position: absolute !important; }
+  </style>
+  <style>
+    .gears-panel { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; gap: 1.5rem !important; justify-items: center !important; padding: 1rem !important; }
+    .gear-wheel, .calendar-wheel { position: relative !important; }
+  </style>
+  <link rel="stylesheet" href="styles.css?v=8">
+</head>
+<body>
+  <div id="app">
+    <div id="start-screen" class="screen">
+      <div class="start-card">
+        <h1>Tzolk'in</h1>
+        <p class="subtitle">Le calendrier maya</p>
+        <label>Nombre de joueurs
+          <select id="player-count">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+        <label>Joueurs humains
+          <select id="human-count">
+            <option value="0">0 (IA vs IA)</option>
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+        <label>Niveau IA
+          <select id="ai-level">
+            <option value="easy">Facile</option>
+            <option value="medium" selected>Moyen</option>
+            <option value="hard">Difficile</option>
+          </select>
+        </label>
+        <fieldset>
+          <legend>Extensions (optionnelles)</legend>
+          <label><input type="checkbox" id="ext-tribes"> Tribus et prophéties — Tribus</label>
+          <label><input type="checkbox" id="ext-prophecies"> Tribus et prophéties — Prophéties</label>
+          <label><input type="checkbox" id="ext-quick"> Actions rapides</label>
+        </fieldset>
+        <button id="start-btn" class="primary">Commencer la partie</button>
+        <p class="hint">Les joueurs humains se partagent le même écran (hot-seat).</p>
+      </div>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span id="round-info"></span>
+          <span id="turn-info"></span>
+        </div>
+        <div class="topbar-mid">
+          <button id="mode-place" class="mode-btn">Placer</button>
+          <button id="mode-pickup" class="mode-btn">Reprendre</button>
+          <button id="end-turn" class="mode-btn danger">Fin de tour</button>
+        </div>
+        <div class="topbar-right">
+          <button id="new-game" class="mode-btn">Nouvelle partie</button>
+        </div>
+      </header>
+
+      <main class="board">
+        <aside class="players-panel" id="players-panel"></aside>
+        <section class="gears-panel" id="gears-panel"></section>
+        <aside class="side-panel">
+          <div class="card" id="temples-card"></div>
+          <div class="card" id="tech-card"></div>
+          <div class="card" id="buildings-card"></div>
+          <div class="card" id="quick-card"></div>
+          <div class="card log-card" id="log-card"></div>
+        </aside>
+      </main>
+
+      <div id="decision-modal" class="modal hidden">
+        <div class="modal-box">
+          <p id="decision-prompt"></p>
+          <div id="decision-options" class="options"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="end-screen" class="screen hidden">
+      <div class="start-card">
+        <h1>Fin de partie</h1>
+        <div id="scores"></div>
+        <button id="restart-btn" class="primary">Rejouer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/ui.js?v=8"></script>
+</body>
+</html>

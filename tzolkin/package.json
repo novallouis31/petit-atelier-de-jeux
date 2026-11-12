@@ -1,0 +1,14 @@
+{
+  "name": "tzolkin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tzolk'in : jeu de plateau jouable dans le navigateur (règles de Reiner Knizia / Daniele Tascini & Simone Luciani).",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/",
+    "start": "node tools/server.mjs"
+  }
+}

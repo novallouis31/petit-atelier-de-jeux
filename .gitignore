@@ -52,3 +52,8 @@ pnpm-debug.log*
 
 # Note : les textures CC0 du projet 3D (course-voitures-3d/public/textures/)
 # sont volontairement versionnées — voir course-voitures-3d/.gitignore.
+
+# Lab de hardening Proxmox VE 9 : projet INDEPENDANT (depot GitHub separe).
+# Il est developpe dans un sous-dossier pour reutiliser le depot parent, mais
+# il ne doit PAS etre versionne ici.
+/pve9-hardening-lab/

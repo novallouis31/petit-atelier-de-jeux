@@ -56,6 +56,7 @@ npm run fetch-textures   # textures CC0 (Poly Haven), ~40 Mo
 ```text
 .
 ├── selene7/              # Atterrisseur planétaire (jeu complet)
+├── tzolkin/              # Jeu de plateau maya (calendrier à engrenages), moteur complet + extension Tribes & Prophecies optionnelle
 ├── course-voitures/      # Grand Prix 2D (jeu complet)
 ├── course-voitures-3d/   # Jeu de course 3D (jeu complet)
 ├── tools/setup-git.mjs   # application de la configuration Git du dépôt
