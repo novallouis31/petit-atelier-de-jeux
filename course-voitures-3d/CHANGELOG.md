@@ -48,6 +48,12 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
   le ciel. Le terrain est désormais une grille complète (4 m de
   résolution) qui couvre toute la zone, avec bandes de gravier (run-off)
   entre la route et les murs.
+- **Terrain qui perçait la chaussée déversée.** Sur les circuits à dévers
+  (Le Saut, Le Col), la chaussée est inclinée sur le côté : le terrain,
+  calculé depuis l'axe seul, restait au-dessus de la chaussée inclinée et
+  la perçait d'un escalier de triangles. Le terrain suit désormais le plan
+  tangent de la route (dévers + pente longitudinale) près de la piste,
+  avant de retrouver son profil libre au loin.
 
 ## [0.2.0]
 

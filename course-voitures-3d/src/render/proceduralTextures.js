@@ -144,13 +144,13 @@ export function tribuneTexture() {
     for (let r = 0; r < rangs; r++) {
       const y = r * (canvas.height / rangs);
       // Dossier.
-      ctx.fillStyle = '#1b2430';
+      ctx.fillStyle = '#232c38';
       ctx.fillRect(0, y, canvas.width, 10);
-      // Assise : deux couleurs alternées, comme les sièges d'un stand.
-      ctx.fillStyle = r % 2 ? '#b03a2e' : '#dfe3e8';
+      // Assise : deux teintes sourdes alternées, comme les sièges d'un stand.
+      ctx.fillStyle = r % 2 ? '#7a4a42' : '#5c6672';
       ctx.fillRect(0, y + 10, canvas.width, 14);
       // Ombre sous le rang.
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(0, y + 24, canvas.width, 8);
     }
 
@@ -352,6 +352,106 @@ export function numeroTexture(chiffre) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(chiffre), 64, 68);
+    return versTexture(canvas);
+  });
+}
+
+/**
+ * Eau : carte de couleur et **carte de normales** calculée d'un champ de
+ * hauteur (interférence de vagues). La normale encode les pentes des vagues
+ * : éclairée, la surface ondule bien plus qu'un simple aplat bleu.
+ */
+
+/** Champ de hauteur des vagues, partagé par les deux cartes. */
+function champVagues(taille) {
+  const h = new Float32Array(taille * taille);
+  const K = Math.PI * 2 / taille;
+  for (let y = 0; y < taille; y++) {
+    for (let x = 0; x < taille; x++) {
+      const u = x * K;
+      const v = y * K;
+      // Quatre trains de vagues croisées, plus un petit clapotis.
+      h[y * taille + x] =
+        Math.sin(u * 3 + v * 1.2) * 0.55 +
+        Math.sin(u * 1.4 - v * 2.7 + 1.3) * 0.4 +
+        Math.sin(u * 5.2 + v * 4.1 + 2.1) * 0.22 +
+        Math.sin(u * 9.1 - v * 7.6) * 0.1;
+    }
+  }
+  return h;
+}
+
+export function eauTexture() {
+  return memo('eau-couleur', () => {
+    const taille = 256;
+    const { canvas, ctx } = toile(taille, taille);
+    const img = ctx.createImageData(taille, taille);
+    const h = champVagues(taille);
+    // Bleu profond : la scène l'éclaire fortement (soleil + ciel), une
+    // carte claire donne une eau gris pâle à l'écran.
+    for (let i = 0; i < taille * taille; i++) {
+      // Crête de vague = un peu plus clair.
+      const c = 0.85 + h[i] * 0.15;
+      img.data[i * 4] = Math.min(255, Math.round(14 * c));
+      img.data[i * 4 + 1] = Math.min(255, Math.round(51 * c));
+      img.data[i * 4 + 2] = Math.min(255, Math.round(82 * c));
+      img.data[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    // Ce sont des couleurs, pas des données : conversion sRGB. Interprétée
+    // en linéaire, la carte donne une eau gris clair délavée.
+    return versTexture(canvas, { srgb: true });
+  });
+}
+
+export function eauNormales() {
+  return memo('eau-normales', () => {
+    const taille = 256;
+    const { canvas, ctx } = toile(taille, taille);
+    const img = ctx.createImageData(taille, taille);
+    const h = champVagues(taille);
+    const AMPL = 3.2; // force du relief, en pixels de haut par unité de h
+    for (let y = 0; y < taille; y++) {
+      for (let x = 0; x < taille; x++) {
+        const i = y * taille + x;
+        // Dérivées par différences finies, avec rebouclage.
+        const hx = h[y * taille + ((x + 1) % taille)] - h[y * taille + ((x - 1 + taille) % taille)];
+        const hy = h[((y + 1) % taille) * taille + x] - h[((y - 1 + taille) % taille) * taille + x];
+        // Normale de la surface z = h(x, y), renormalisée puis encodée.
+        const nx = -hx * AMPL;
+        const ny = -hy * AMPL;
+        const nz = 2;
+        const l = Math.hypot(nx, ny, nz);
+        img.data[i * 4] = Math.round(((nx / l) * 0.5 + 0.5) * 255);
+        img.data[i * 4 + 1] = Math.round(((ny / l) * 0.5 + 0.5) * 255);
+        img.data[i * 4 + 2] = Math.round(((nz / l) * 0.5 + 0.5) * 255);
+        img.data[i * 4 + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    return versTexture(canvas, { srgb: false });
+  });
+}
+
+/** Cactus : colonne verte à côtes verticales. */
+export function cactusTexture() {
+  return memo('cactus', () => {
+    const { canvas, ctx } = toile(128, 256);
+    const rnd = alea(8102);
+    ctx.fillStyle = '#3d6b35';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Côtes verticales : clair sur l'arête, ombre dans le creux.
+    for (let x = 0; x < canvas.width; x += 14) {
+      ctx.fillStyle = '#54844a';
+      ctx.fillRect(x, 0, 5, canvas.height);
+      ctx.fillStyle = 'rgba(20,40,18,0.4)';
+      ctx.fillRect(x + 9, 0, 4, canvas.height);
+    }
+    // Épines : petites mouchetures claires.
+    for (let i = 0; i < 300; i++) {
+      ctx.fillStyle = `rgba(230,235,200,${(0.3 + rnd() * 0.4).toFixed(2)})`;
+      ctx.fillRect(rnd() * canvas.width, rnd() * canvas.height, 1.5, 1.5);
+    }
     return versTexture(canvas);
   });
 }

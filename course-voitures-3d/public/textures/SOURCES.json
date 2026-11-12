@@ -59,5 +59,35 @@
     "resolution": "1k",
     "source": "https://polyhaven.com/a/checkered_pavement_tiles",
     "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "snow_02",
+    "maps": [
+      "diff",
+      "nrm"
+    ],
+    "resolution": "2k",
+    "source": "https://polyhaven.com/a/snow_02",
+    "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "sand_01",
+    "maps": [
+      "diff",
+      "nrm"
+    ],
+    "resolution": "2k",
+    "source": "https://polyhaven.com/a/sand_01",
+    "license": "CC0 (domaine public)"
+  },
+  {
+    "asset": "rock_face",
+    "maps": [
+      "diff",
+      "nrm"
+    ],
+    "resolution": "1k",
+    "source": "https://polyhaven.com/a/rock_face",
+    "license": "CC0 (domaine public)"
   }
 ]

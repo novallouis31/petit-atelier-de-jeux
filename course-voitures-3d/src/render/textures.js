@@ -7,6 +7,7 @@
  */
 
 import * as THREE from 'three';
+import { eauTexture, eauNormales } from './proceduralTextures.js';
 
 const TEX = '/textures/';
 
@@ -67,6 +68,60 @@ export function groundMaterial(mapName = 'grass_ground_diff_2k.jpg', normalName 
     roughness: 0.98,
     metalness: 0.0,
     normalScale: new THREE.Vector2(0.6, 0.6),
+  });
+}
+
+/** Matériau de la neige (terrain). */
+export function snowMaterial(mapName = 'snow_02_diff_2k.jpg', normalName = 'snow_02_nor_gl_2k.png') {
+  return new THREE.MeshStandardMaterial({
+    map: load(mapName, { srgb: true }),
+    normalMap: load(normalName),
+    roughness: 0.85,
+    metalness: 0.0,
+    normalScale: new THREE.Vector2(0.45, 0.45),
+  });
+}
+
+/** Matériau du sable (désert). */
+export function sandMaterial(mapName = 'sand_01_diff_2k.jpg', normalName = 'sand_01_nor_gl_2k.png') {
+  return new THREE.MeshStandardMaterial({
+    map: load(mapName, { srgb: true }),
+    normalMap: load(normalName),
+    roughness: 1.0,
+    metalness: 0.0,
+    normalScale: new THREE.Vector2(0.5, 0.5),
+  });
+}
+
+/** Matériau de la roche (montagne). */
+export function rockMaterial(mapName = 'rock_face_diff_1k.jpg', normalName = 'rock_face_nor_gl_1k.png') {
+  return new THREE.MeshStandardMaterial({
+    map: load(mapName, { srgb: true }),
+    normalMap: load(normalName),
+    roughness: 1.0,
+    metalness: 0.0,
+    normalScale: new THREE.Vector2(0.8, 0.8),
+  });
+}
+
+/**
+ * Matériau de l'eau : carte de couleur, carte de normales ondulée
+ * (procédurales), surface semi-transparente qui reflète le ciel via
+ * l'environnement de la scène.
+ */
+export function eauMaterial() {
+  return new THREE.MeshStandardMaterial({
+    map: eauTexture(),
+    normalMap: eauNormales(),
+    roughness: 0.3,
+    metalness: 0.2,
+    transparent: true,
+    opacity: 0.92,
+    normalScale: new THREE.Vector2(0.9, 0.9),
+    // La réflexion de l'environnement est bridée : le ciel de Preetham est
+    // très lumineux près de l'horizon, et sans ce frein l'eau ne renvoie
+    // qu'un reflet gris pâle — la teinte de la carte disparaît.
+    envMapIntensity: 0.3,
   });
 }
 

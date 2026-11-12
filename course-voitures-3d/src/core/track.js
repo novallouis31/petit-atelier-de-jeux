@@ -456,6 +456,11 @@ export function buildTrack(def) {
       dist: Math.abs(lateral),
       half,
       onTrack: Math.abs(lateral) <= half,
+      // Centre projeté sur l'axe : permet au terrain (terrainHeight.js) de
+      // retrouver le plan tangent de la route au point demandé.
+      px: proj.px,
+      py: proj.py,
+      pz: proj.pz,
       // Le dévers abaisse le côté droit : l'altitude baisse quand on va à droite.
       height: proj.py - lateral * Math.tan(bank),
       nx, ny, nz,

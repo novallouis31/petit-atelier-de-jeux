@@ -27,6 +27,10 @@ const WANTED = [
   { asset: 'gravel_road', maps: ['diff', 'nrm'], res: '1k' },
   { asset: 'concrete', maps: ['diff', 'nrm', 'rough'], res: '1k' },
   { asset: 'checkered_pavement_tiles', maps: ['diff'], res: '1k' },
+  // Environnements : neige, désert, montagne.
+  { asset: 'snow_02', maps: ['diff', 'nrm'], res: '2k' },
+  { asset: 'sand_01', maps: ['diff', 'nrm'], res: '2k' },
+  { asset: 'rock_face', maps: ['diff', 'nrm'], res: '1k' },
 ];
 
 /**

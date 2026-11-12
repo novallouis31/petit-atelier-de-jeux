@@ -48,6 +48,10 @@ class FakeContext2D {
   createLinearGradient() { return { addColorStop() {} }; }
   createRadialGradient() { return { addColorStop() {} }; }
   createPattern() { return {}; }
+  createImageData(w, h) {
+    return { data: new Uint8ClampedArray(w * h * 4), width: w, height: h };
+  }
+  putImageData() {}
 }
 
 class FakeElement {

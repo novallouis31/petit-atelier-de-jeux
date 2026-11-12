@@ -172,15 +172,15 @@ Unités SI strictes : mètres, kilogrammes, secondes, newtons.
 
 | Identifiant | Nom | Environnement |
 | --- | --- | --- |
-| `genets` | Boucle des Genêts | prairie |
+| `genets` | Boucle des Genêts | lac (bord de l’eau) |
 | `aiguille` | L'Aiguille | prairie |
 | `cigogne` | La Cigogne | prairie |
 | `escargot` | L'Escargot | prairie |
 | `onde` | L'Onde | prairie |
-| `saut` | Le Saut | grande crête |
-| `esses` | Les Esses | enchaînement de virages |
+| `saut` | Le Saut | neige (grande crête) |
+| `esses` | Les Esses | prairie |
 | `col` | Le Col | montagne |
-| `horloge` | L'Horloge | crépuscule |
+| `horloge` | L'Horloge | désert (crépuscule) |
 | `village` | Le Village | urbain |
 
 Chaque circuit est décrit par une forme en plan — harmoniques polaires pour

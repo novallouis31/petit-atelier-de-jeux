@@ -17,19 +17,26 @@ import {
   gravelMaterial,
   concreteMaterial,
   checkerMaterial,
+  snowMaterial,
+  sandMaterial,
+  rockMaterial,
+  eauMaterial,
 } from './textures.js';
 import { bandesTexture } from './proceduralTextures.js';
 import { buildScenery } from './scenery.js';
-import { hauteurTerrain } from './terrainHeight.js';
+import { hauteurTerrain, niveauEau } from './terrainHeight.js';
 
 /**
- * Matériau du sol selon le thème : gazon, gravier ou béton.
- * Le thème « gravel » des circuits chauds donnait sinon un terrain vert
- * qui contredisait le décor.
+ * Matériau du sol selon le thème : gazon, neige, sable, roche, gravier ou
+ * béton. Chaque environnement (`theme.env`) a sa texture — un terrain vert
+ * au milieu des dunes casserait l'illusion.
  */
 function terrainMaterial(theme) {
   if (theme?.ground === 'gravel') return gravelMaterial();
   if (theme?.ground === 'concrete') return concreteMaterial();
+  if (theme?.ground === 'snow') return snowMaterial();
+  if (theme?.ground === 'sand') return sandMaterial();
+  if (theme?.ground === 'rock') return rockMaterial();
   return groundMaterial();
 }
 
@@ -109,11 +116,23 @@ function buildRoadMesh(track) {
  * Sans elles, il y a un trou entre le bord de la chaussée et la glissière :
  * on voit le ciel à travers, et le sol n'existe que sous la route.
  */
-function buildRunoff(track) {
+/**
+ * Matériau des bandes de run-off : gravier en climat tempéré, mais la
+ * même surface que le sol ailleurs — une grande bande brune au milieu
+ * des dunes ou de la neige casserait l'environnement.
+ */
+function runoffMaterial(theme) {
+  if (theme?.ground === 'snow') return snowMaterial();
+  if (theme?.ground === 'sand') return sandMaterial();
+  if (theme?.ground === 'rock') return rockMaterial();
+  return gravelMaterial();
+}
+
+function buildRunoff(track, theme) {
   const group = new THREE.Group();
   group.name = 'runoff';
 
-  const mat = gravelMaterial();
+  const mat = runoffMaterial(theme);
   // u est en mètres : une tuile de gravier tous les 2 m. La répétition est
   // intégrée aux UV plutôt que réglée sur la texture, qui est partagée avec
   // le terrain.
@@ -524,6 +543,56 @@ function buildTerrain(track, theme) {
 }
 
 /**
+ * Plan d'eau pour les circuits au bord du lac.
+ *
+ * Un grand plan posé **sous** le niveau du terrain : là où le terrain
+ * descend (il s'éloigne de la piste en pente douce), il passe sous le plan
+ * et la ligne d'intersection dessine une rive naturelle, avec le bruit du
+ * terrain pour la faire onduler. Le matériau reflète le ciel via
+ * l'environnement de la scène.
+ */
+function buildEau(track, theme) {
+  if (theme?.env !== 'lake') return null;
+
+  // Ancre : le point de piste au plus bas (le lac occupe la vallée),
+  // décalé vers l'extérieur de la boucle.
+  let plusBas = track.pts[0];
+  for (const p of track.pts) if (p.y < plusBas.y) plusBas = p;
+
+  // De quel côté est l'extérieur ? Celui opposé au centre de la boucle.
+  let cx = 0;
+  let cz = 0;
+  for (const p of track.pts) { cx += p.x; cz += p.z; }
+  cx /= track.N;
+  cz /= track.N;
+  const horsX = plusBas.x - cx;
+  const horsZ = plusBas.z - cz;
+  const l = Math.hypot(horsX, horsZ) || 1;
+
+  const distance = track.halfWidth + track.runoff + 30;
+  const ax = plusBas.x + (horsX / l) * distance;
+  const az = plusBas.z + (horsZ / l) * distance;
+
+  // Niveau d'eau : sous le terrain au point d'ancrage, mais au-dessus du
+  // terrain lointain (qui continue de descendre) — la rive naît de là.
+  // Formule partagée avec le décor (terrainHeight.js).
+  const niveau = niveauEau(track, theme);
+
+  const geo = new THREE.PlaneGeometry(3200, 3200, 1, 1);
+  const mesh = new THREE.Mesh(geo, eauMaterial());
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set(ax, niveau, az);
+  // Les normales du plan d'eau pointent vers le ciel.
+  mesh.name = 'eau';
+  mesh.receiveShadow = false;
+
+  const group = new THREE.Group();
+  group.name = 'plan-eau';
+  group.add(mesh);
+  return group;
+}
+
+/**
  * Ligne de départ : damier en travers de la piste.
  */
 function buildStartLine(track) {
@@ -556,7 +625,9 @@ export function buildTrackScene(track) {
   group.name = 'circuit';
 
   group.add(buildTerrain(track, track.theme));
-  group.add(buildRunoff(track));
+  const eau = buildEau(track, track.theme);
+  if (eau) group.add(eau);
+  group.add(buildRunoff(track, track.theme));
   group.add(buildRoadMesh(track));
   group.add(buildKerbs(track));
   group.add(buildBarriers(track));

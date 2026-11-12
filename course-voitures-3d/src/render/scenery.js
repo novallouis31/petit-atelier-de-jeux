@@ -26,8 +26,9 @@ import {
   rocherTexture,
   ecorceTexture,
   feuillageTexture,
+  cactusTexture,
 } from './proceduralTextures.js';
-import { hauteurTerrain } from './terrainHeight.js';
+import { hauteurTerrain, niveauEau } from './terrainHeight.js';
 
 /** Générateur pseudo-aléatoire déterministe (mulberry32). */
 function generer(graine) {
@@ -80,31 +81,112 @@ function instancier(geo, mat, transforms, depot, { ombre = true, teinte = false 
 /** Hauteur du sol en un point, d'après la géométrie de la piste. */
 function solEn(track, x, z) {
   const loc = track.locate(x, z, -1);
+  // Même formule que le maillage du terrain (terrainHeight.js), avec le
+  // plan tangent reconstruit depuis la projection sur l'axe : le décor
+  // repose exactement sur le sol dessiné, dévers et pente compris.
   return {
     loc,
-    sol: hauteurTerrain({ y: loc.height }, loc.dist, loc.half, x, z),
+    sol: hauteurTerrain({
+      x: loc.px, y: loc.py, z: loc.pz,
+      rx: loc.rx, ry: loc.ry, rz: loc.rz,
+      tx: loc.tx, ty: loc.ty, tz: loc.tz,
+    }, loc.dist, loc.half, x, z),
   };
 }
 
 /* --------------------------------------------------------------------------
-   Arbres, rochers, buissons
+   Arbres, rochers, buissons — par environnement
    -------------------------------------------------------------------------- */
+
+/**
+ * Réglages de végétation par environnement.
+ *
+ * `env` vient du thème du circuit (`src/core/tracks.js`). Chaque
+ * environnement a ses espèces, ses teintes et ses densités : des palmiers
+ * ou des sapins enneigés au milieu des dunes casseraient l'illusion.
+ */
+const ENVS = {
+  temperate: {
+    pins: 0.45, feuillus: 0.35, cypres: 0.2, arbres: 340,
+    rochers: 90, buissons: 150,
+    teintePin: [0.30, 0.08, 0.35], teinteFeuillu: [0.30, 0.08, 0.35],
+    teinteBuisson: null, teinteRocher: null,
+  },
+  /* Bord de lac : végétation plus dense et plus claire, près de l'eau. */
+  lake: {
+    pins: 0.3, feuillus: 0.5, cypres: 0.2, arbres: 380,
+    rochers: 60, buissons: 190,
+    teintePin: [0.32, 0.1, 0.38], teinteFeuillu: [0.31, 0.12, 0.4],
+    teinteBuisson: null, teinteRocher: null,
+  },
+  /* Montagne : rochers dominants, conifères sombres, peu d'arbres. */
+  mountain: {
+    pins: 0.9, feuillus: 0.1, cypres: 0, arbres: 170,
+    rochers: 260, buissons: 70,
+    teintePin: [0.34, 0.28, 0.24], teinteFeuillu: [0.34, 0.28, 0.24],
+    teinteBuisson: [0.33, 0.2, 0.3], teinteRocher: null,
+  },
+  /* Neige : conifères pâles (teinte froide qui désature le feuillage),
+     pas de feuillus nus, rochers grisés. */
+  snow: {
+    pins: 0.75, feuillus: 0.25, cypres: 0, arbres: 230,
+    rochers: 130, buissons: 60,
+    teintePin: [0.36, 0.06, 0.55], teinteFeuillu: [0.36, 0.06, 0.55],
+    teinteBuisson: [0.36, 0.06, 0.55], teinteRocher: [0.35, 0.05, 0.6],
+  },
+  /* Désert : cactus et buissons morts, rochers couleur grès. */
+  desert: {
+    pins: 0, feuillus: 0, cypres: 0, arbres: 0, cactus: 120,
+    rochers: 200, buissons: 170,
+    teintePin: null, teinteFeuillu: null,
+    teinteBuisson: [0.09, 0.45, 0.35], teinteRocher: [0.08, 0.5, 0.45],
+  },
+  /* Ville : quelques arbres d'alignement, presque pas de rochers. */
+  city: {
+    pins: 0.2, feuillus: 0.6, cypres: 0.2, arbres: 110,
+    rochers: 12, buissons: 90,
+    teintePin: [0.3, 0.08, 0.35], teinteFeuillu: [0.3, 0.08, 0.35],
+    teinteBuisson: null, teinteRocher: null,
+  },
+};
 
 function buildVegetation(track, rnd, depot, zone, theme) {
   const { cx, cz, span, marge } = zone;
+  const env = ENVS[theme?.env] ?? ENVS.temperate;
+  // Au bord du lac, rien ne pousse sous le niveau de l'eau.
+  const sousEau = niveauEau(track, theme);
+  const horsEau = sousEau === null ? () => true : (sol) => sol > sousEau;
+
+  // Feuillages selon l'environnement : enneigés dans la neige (le rendu
+  // instancié multiplie la teinte par la texture — on ne peut donc pas
+  // éclaircir une texture verte d'été, il faut une texture d'hiver),
+  // desséchés dans le désert.
+  const neige = theme?.env === 'snow';
+  const aride = theme?.env === 'desert';
+  const texPin = neige
+    ? feuillageTexture('pin-neige', '#2c4a30', '#e6eef4')
+    : feuillageTexture('pin', '#24491f', '#3f7a33');
+  const texFeuillu = neige
+    ? feuillageTexture('feuillu-neige', '#4a5560', '#e8f0f4')
+    : feuillageTexture('feuillu', '#2f5d2a', '#63b04f');
+  const texBuisson = neige
+    ? feuillageTexture('buisson-neige', '#4a5560', '#e8f0f4')
+    : aride
+      ? feuillageTexture('buisson-aride', '#5f5233', '#8a7a45')
+      : feuillageTexture('buisson', '#355c2a', '#5c9440');
 
   const troncGeo = new THREE.CylinderGeometry(0.22, 0.34, 2.6, 7);
   const troncMat = new THREE.MeshStandardMaterial({ map: ecorceTexture(), roughness: 1 });
 
   const pinGeo = new THREE.ConeGeometry(1.9, 5.2, 7);
   const pinMat = new THREE.MeshStandardMaterial({
-    map: feuillageTexture('pin', '#24491f', '#3f7a33'),
+    map: texPin,
     roughness: 0.95,
     flatShading: true,
   });
   const feuilluGeo = new THREE.IcosahedronGeometry(2.4, 1);
   const feuilluMat = new THREE.MeshStandardMaterial({
-    map: feuillageTexture('feuillu', '#2f5d2a', '#63b04f'),
+    map: texFeuillu,
     roughness: 0.95,
     flatShading: true,
   });
@@ -114,37 +196,56 @@ function buildVegetation(track, rnd, depot, zone, theme) {
     roughness: 0.95,
     flatShading: true,
   });
+  /* Cactus : colonne effilée, texture à côtes verticales. */
+  const cactusGeo = new THREE.CylinderGeometry(0.26, 0.34, 2.6, 9);
+  const cactusMat = new THREE.MeshStandardMaterial({
+    map: cactusTexture(),
+    roughness: 0.85,
+  });
 
   const troncs = [];
   const pins = [];
   const feuillus = [];
   const cypres = [];
+  const cactus = [];
 
-  for (let i = 0; i < 340; i++) {
+  for (let i = 0; i < env.arbres; i++) {
     const x = cx + (rnd() - 0.5) * span * 1.7;
     const z = cz + (rnd() - 0.5) * span * 1.7;
     const { loc, sol } = solEn(track, x, z);
-    if (loc.dist < marge + 9) continue;
+    if (loc.dist < marge + 9 || !horsEau(sol)) continue;
 
     const e = 0.7 + rnd() * 0.8;
     const rotY = rnd() * Math.PI * 2;
     const teinte = new THREE.Color().setHSL(
-      0.30 + rnd() * 0.08,
-      theme.ground === 'gravel' ? 0.22 : 0.35,
-      0.40 + rnd() * 0.2
+      env.teintePin[0] + rnd() * 0.04,
+      env.teintePin[1],
+      env.teintePin[2] + rnd() * 0.12
     );
 
     troncs.push({ x, y: sol + 1.3 * e, z, echelle: e, rotY });
 
     const variete = rnd();
-    if (variete < 0.45) {
+    if (variete < env.pins) {
       // Pin : deux étages de branches.
       pins.push({ x, y: sol + 4.4 * e, z, echelle: e, rotY, couleur: teinte });
       pins.push({ x, y: sol + 2.5 * e, z, echelle: e * 0.78, rotY, couleur: teinte });
-    } else if (variete < 0.8) {
+    } else if (variete < env.pins + env.feuillus) {
       feuillus.push({ x, y: sol + 3.3 * e, z, echelle: e, rotY, couleur: teinte });
-    } else {
+    } else if (env.cypres > 0) {
       cypres.push({ x, y: sol + 4.0 * e, z, echelle: e, rotY, couleur: teinte });
+    }
+  }
+
+  /* Cactus du désert : ils remplacent les arbres. */
+  if (env.cactus) {
+    for (let i = 0; i < env.cactus; i++) {
+      const x = cx + (rnd() - 0.5) * span * 1.6;
+      const z = cz + (rnd() - 0.5) * span * 1.6;
+      const { loc, sol } = solEn(track, x, z);
+      if (loc.dist < marge + 9 || !horsEau(sol)) continue;
+      const e = 0.5 + rnd() * 1.1;
+      cactus.push({ x, y: sol + 1.3 * e, z, echelle: e, rotY: rnd() * Math.PI * 2 });
     }
   }
 
@@ -152,9 +253,10 @@ function buildVegetation(track, rnd, depot, zone, theme) {
   instancier(pinGeo, pinMat, pins, depot, { teinte: true });
   instancier(feuilluGeo, feuilluMat, feuillus, depot, { teinte: true });
   instancier(cypresGeo, cypresMat, cypres, depot, { teinte: true });
+  instancier(cactusGeo, cactusMat, cactus, depot);
 
   /* Rochers et buissons : ils comblent les espaces vides et donnent de
-     l'échelle au paysage. */
+     l'échelle au paysage. Leurs teintes suivent l'environnement. */
   const rocherGeo = new THREE.DodecahedronGeometry(1, 0);
   const rocherMat = new THREE.MeshStandardMaterial({
     map: rocherTexture(),
@@ -162,40 +264,56 @@ function buildVegetation(track, rnd, depot, zone, theme) {
     flatShading: true,
   });
   const rochers = [];
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < env.rochers; i++) {
     const x = cx + (rnd() - 0.5) * span * 1.6;
     const z = cz + (rnd() - 0.5) * span * 1.6;
     const { loc, sol } = solEn(track, x, z);
-    if (loc.dist < marge + 7) continue;
+    if (loc.dist < marge + 7 || !horsEau(sol)) continue;
     const e = 0.5 + rnd() * 1.9;
+    const t = env.teinteRocher
+      ? new THREE.Color().setHSL(
+          env.teinteRocher[0] + rnd() * 0.02,
+          env.teinteRocher[1],
+          env.teinteRocher[2] + rnd() * 0.08
+        )
+      : 0xffffff;
     rochers.push({
       x, y: sol + e * 0.25, z,
       sx: e, sy: e * (0.5 + rnd() * 0.5), sz: e * (0.7 + rnd() * 0.5),
       rotY: rnd() * Math.PI * 2,
+      couleur: t,
     });
   }
-  instancier(rocherGeo, rocherMat, rochers, depot);
+  instancier(rocherGeo, rocherMat, rochers, depot, { teinte: true });
 
   const buissonGeo = new THREE.IcosahedronGeometry(0.9, 1);
   const buissonMat = new THREE.MeshStandardMaterial({
-    map: feuillageTexture('buisson', '#355c2a', '#5c9440'),
+    map: texBuisson,
     roughness: 1,
     flatShading: true,
   });
   const buissons = [];
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < env.buissons; i++) {
     const x = cx + (rnd() - 0.5) * span * 1.5;
     const z = cz + (rnd() - 0.5) * span * 1.5;
     const { loc, sol } = solEn(track, x, z);
-    if (loc.dist < marge + 4) continue;
+    if (loc.dist < marge + 4 || !horsEau(sol)) continue;
     const e = 0.5 + rnd() * 1.1;
+    const t = env.teinteBuisson
+      ? new THREE.Color().setHSL(
+          env.teinteBuisson[0] + rnd() * 0.03,
+          env.teinteBuisson[1],
+          env.teinteBuisson[2] + rnd() * 0.08
+        )
+      : 0xffffff;
     buissons.push({
       x, y: sol + e * 0.45, z,
       sx: e, sy: e * 0.62, sz: e,
       rotY: rnd() * Math.PI * 2,
+      couleur: t,
     });
   }
-  instancier(buissonGeo, buissonMat, buissons, depot);
+  instancier(buissonGeo, buissonMat, buissons, depot, { teinte: true });
 }
 
 /* --------------------------------------------------------------------------
@@ -413,7 +531,9 @@ function buildPortique(track, depot) {
     banniereMat
   );
   banniere.position.set(p.x, p.y + 5.1, p.z);
-  banniere.rotation.y = rotY;
+  // La face avant du plan regarde la direction de course : vue de
+  // l'approche, le texte est à l'endroit — et non en miroir.
+  banniere.rotation.y = rotY + Math.PI;
   groupe.add(banniere);
 
   depot.add(groupe);

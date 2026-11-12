@@ -170,3 +170,17 @@ test('le rayon minimal reste franchissable', () => {
     assert.ok(t.minRadius > 12, `${id} : virage trop serré (${t.minRadius.toFixed(1)} m)`);
   }
 });
+
+test('chaque circuit a un environnement connu et la gamme est couverte', () => {
+  const CONNUS = new Set(['temperate', 'lake', 'snow', 'mountain', 'desert', 'city']);
+  const vus = new Set();
+  for (const id of TRACK_IDS) {
+    const env = TRACKS[id].theme.env ?? 'temperate';
+    assert.ok(CONNUS.has(env), `${id} : environnement inconnu « ${env} »`);
+    vus.add(env);
+  }
+  // Les quatre environnements demandés doivent exister dans le catalogue.
+  for (const attendu of ['snow', 'mountain', 'desert', 'lake']) {
+    assert.ok(vus.has(attendu), `aucun circuit en environnement « ${attendu} »`);
+  }
+});
