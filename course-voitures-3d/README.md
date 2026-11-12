@@ -13,11 +13,24 @@ relief et adversaires pilotés par une IA, autour de
 
 ## Installation
 
+Le plus simple, sous Windows : **double-cliquez sur `demarrer.cmd`**, à côté de
+`index.html`. Le script installe les dépendances au premier lancement, démarre
+le serveur et ouvre le navigateur. Fermer la fenêtre arrête le jeu.
+
+En ligne de commande :
+
 ```powershell
 cd course-voitures-3d
 npm install
 npm run dev
 ```
+
+puis ouvrir l'adresse affichée par Vite (http://127.0.0.1:5173 par défaut).
+
+Le lanceur (`npm start`, ou `node demarrer.mjs`) fait la même chose que
+`npm run dev`, avec deux différences : il ouvre le navigateur tout seul, et il
+**réutilise un serveur déjà lancé** au lieu d'en démarrer un second. Options :
+`--sans-navigateur`, et la variable `PORT` (par défaut 5173).
 
 Les textures sont **versionnées** : `npm run fetch:textures` et
 `npm run optimize:textures` ne servent qu'à les régénérer.
@@ -26,6 +39,7 @@ Scripts disponibles :
 
 | Script | Rôle |
 | --- | --- |
+| `npm start` | lance le jeu et ouvre le navigateur (`demarrer.mjs`) |
 | `npm run dev` | serveur de développement Vite |
 | `npm run build` | build de production |
 | `npm run preview` | prévisualisation du build |
@@ -52,6 +66,7 @@ src/core/track.js     construction géométrique d'un circuit
 src/core/tracks.js    catalogue des circuits
 src/core/ai.js        pilotes automatiques
 src/core/race.js      déroulement d'une course (tours, positions, arrivée)
+src/core/input.js     correspondance clavier → commandes de conduite
 src/render/scene.js   scène, lumières, ciel, post-traitement
 src/render/trackMesh.js  maillage de la route, vibreurs, glissières, décor
 src/render/carMesh.js    modèle de voiture (construit par code)
@@ -67,6 +82,8 @@ public/textures/      textures CC0 (Poly Haven), versionnées
 tools/fetch-textures.mjs       téléchargeur de textures
 tools/optimize-textures.mjs    compression des textures
 tools/bench.mjs                  banc d'essai IA des circuits
+demarrer.cmd          lanceur Windows (double-clic)
+demarrer.mjs          logique du lanceur (Node)
 ```
 
 `three.js` n'est pas embarqué : il vient de `node_modules` et est résolu par

@@ -10,6 +10,11 @@
 *.md   text
 *.txt  text
 
+# Scripts Windows : cmd.exe attend des fins de ligne CRLF, sinon les blocs
+# multi-lignes (if ... ( ... )) peuvent être mal interprétés.
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
 # Binaires
 *.jpg  binary
 *.jpeg binary

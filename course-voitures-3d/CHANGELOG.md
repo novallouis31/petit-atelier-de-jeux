@@ -7,6 +7,13 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- **Lanceur d'un double-clic** (`demarrer.cmd`, logique dans `demarrer.mjs`,
+  aussi accessible par `npm start`). Il vérifie Node, installe les
+  dépendances au premier lancement, démarre Vite, ouvre le navigateur, et
+  réutilise un serveur déjà lancé au lieu d'en démarrer un second.
+
 ### Corrigé
 
 - **La direction à droite était muette.** `KEYMAP` contenait `KeyRight` au
