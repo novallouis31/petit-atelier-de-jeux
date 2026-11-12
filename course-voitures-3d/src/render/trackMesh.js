@@ -13,13 +13,10 @@
 import * as THREE from 'three';
 import {
   roadMaterial,
-  groundMaterial,
+  solMaterial,
   gravelMaterial,
   concreteMaterial,
   checkerMaterial,
-  snowMaterial,
-  sandMaterial,
-  rockMaterial,
   eauMaterial,
 } from './textures.js';
 import { bandesTexture } from './proceduralTextures.js';
@@ -32,12 +29,7 @@ import { hauteurTerrain, niveauEau } from './terrainHeight.js';
  * au milieu des dunes casserait l'illusion.
  */
 function terrainMaterial(theme) {
-  if (theme?.ground === 'gravel') return gravelMaterial();
-  if (theme?.ground === 'concrete') return concreteMaterial();
-  if (theme?.ground === 'snow') return snowMaterial();
-  if (theme?.ground === 'sand') return sandMaterial();
-  if (theme?.ground === 'rock') return rockMaterial();
-  return groundMaterial();
+  return solMaterial(theme?.ground);
 }
 
 /**
@@ -122,9 +114,8 @@ function buildRoadMesh(track) {
  * des dunes ou de la neige casserait l'environnement.
  */
 function runoffMaterial(theme) {
-  if (theme?.ground === 'snow') return snowMaterial();
-  if (theme?.ground === 'sand') return sandMaterial();
-  if (theme?.ground === 'rock') return rockMaterial();
+  const sol = theme?.ground;
+  if (sol === 'snow' || sol === 'sand' || sol === 'rock') return solMaterial(sol);
   return gravelMaterial();
 }
 

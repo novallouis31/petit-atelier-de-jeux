@@ -30,6 +30,10 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 - **Validation du rendu** (`src/render/validation.js`, testé sous Node) :
   aucun objet du décor ni de la voiture ne peut rester sans texture ;
   le résultat est exposé par `window.__game.validerRendu()`.
+- **Correspondance environnement → texture centralisée** (`SOLS` dans
+  `textures.js`) : chaque sol (herbe, gravier, béton, neige, sable, roche)
+  a sa texture, et un test vérifie que le fichier existe réellement dans
+  `public/textures/`.
 
 ### Corrigé
 

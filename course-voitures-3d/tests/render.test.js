@@ -209,6 +209,65 @@ test('le décor 3D d’un circuit est construit correctement', async () => {
   assert.ok(normale.y > 0, 'les triangles de la route doivent être dans le sens direct');
 });
 
+test('chaque circuit porte la texture de son environnement', async () => {
+  const { existsSync } = await import('node:fs');
+  const { dirname, join } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const { TRACKS, TRACK_IDS } = await import('../src/core/tracks.js');
+  const { buildTrack } = await import('../src/core/track.js');
+  const { buildTrackScene } = await import('../src/render/trackMesh.js');
+  const { niveauEau } = await import('../src/render/terrainHeight.js');
+  const { SOLS } = await import('../src/render/textures.js');
+  const { ENVS } = await import('../src/render/scenery.js');
+
+  const DOSSIER = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'textures');
+
+  // Chaque environnement a sa texture, et le fichier existe vraiment.
+  const vues = new Set();
+  for (const [nom, sol] of Object.entries(SOLS)) {
+    assert.ok(sol.diff, `${nom} : texture de couleur manquante`);
+    assert.ok(
+      existsSync(join(DOSSIER, sol.diff)),
+      `${nom} : le fichier « ${sol.diff} » est absent de public/textures`
+    );
+    vues.add(sol.diff);
+    for (const cle of ['nrm', 'rough']) {
+      if (!sol[cle]) continue;
+      assert.ok(
+        existsSync(join(DOSSIER, sol[cle])),
+        `${nom} : le fichier « ${sol[cle]} » est absent de public/textures`
+      );
+    }
+  }
+  // Deux environnements ne doivent pas partager la même texture.
+  assert.equal(vues.size, Object.keys(SOLS).length, 'chaque sol a sa texture');
+
+  for (const id of TRACK_IDS) {
+    const def = TRACKS[id];
+    const track = buildTrack(def);
+    const scene = buildTrackScene(track);
+
+    // Le sol du circuit est un sol connu.
+    assert.ok(SOLS[def.theme.ground], `${id} : sol inconnu « ${def.theme.ground} »`);
+
+    // L'eau n'existe que sur le circuit au bord du lac, au bon niveau.
+    const eau = scene.getObjectByName('plan-eau');
+    if (def.theme.env === 'lake') {
+      assert.ok(eau, `${id} : le lac doit avoir un plan d'eau`);
+      const plan = eau.children.find((c) => c.isMesh);
+      assert.ok(
+        Math.abs(plan.position.y - niveauEau(track, def.theme)) < 0.01,
+        `${id} : le plan d'eau est au mauvais niveau`
+      );
+    } else {
+      assert.equal(eau, undefined, `${id} : pas de plan d'eau hors du lac`);
+    }
+
+    // Chaque environnement a ses réglages de végétation.
+    assert.ok(ENVS[def.theme.env], `${id} : environnement « ${def.theme.env} » sans réglages`);
+  }
+});
+
 test('la voiture est construite avec ses roues', async () => {
   const { buildCar, updateCarMesh } = await import('../src/render/carMesh.js');
   const { createCarState } = await import('../src/core/physics.js');

@@ -43,6 +43,70 @@ export function loadAll(requests) {
 }
 
 /**
+ * Textures de sol, par environnement.
+ *
+ * Chaque environnement a sa texture : un terrain vert au milieu des dunes
+ * casserait l'illusion. Le tableau est exporté pour être vérifié par les
+ * tests (fichiers réellement présents dans `public/textures/`).
+ */
+export const SOLS = {
+  grass: {
+    diff: 'grass_ground_diff_2k.jpg',
+    nrm: 'grass_ground_nor_gl_2k.png',
+    roughness: 0.98,
+    normalScale: 0.6,
+  },
+  gravel: {
+    diff: 'gravel_road_diff_1k.jpg',
+    roughness: 1.0,
+  },
+  concrete: {
+    diff: 'concrete_diff_1k.jpg',
+    rough: 'concrete_rough_1k.jpg',
+    roughness: 0.9,
+  },
+  snow: {
+    diff: 'snow_02_diff_2k.jpg',
+    nrm: 'snow_02_nor_gl_2k.png',
+    roughness: 0.85,
+    normalScale: 0.45,
+  },
+  sand: {
+    diff: 'sand_01_diff_2k.jpg',
+    nrm: 'sand_01_nor_gl_2k.png',
+    roughness: 1.0,
+    normalScale: 0.5,
+  },
+  rock: {
+    diff: 'rock_face_diff_1k.jpg',
+    nrm: 'rock_face_nor_gl_1k.png',
+    roughness: 1.0,
+    normalScale: 0.8,
+  },
+};
+
+/**
+ * Matériau du sol pour un environnement donné.
+ *
+ * @param {string} ground  `grass`, `gravel`, `concrete`, `snow`, `sand`,
+ *                         `rock`
+ */
+export function solMaterial(ground = 'grass') {
+  const s = SOLS[ground] ?? SOLS.grass;
+  const mat = new THREE.MeshStandardMaterial({
+    map: load(s.diff, { srgb: true }),
+    roughness: s.roughness,
+    metalness: 0.0,
+  });
+  if (s.nrm) {
+    mat.normalMap = load(s.nrm);
+    mat.normalScale = new THREE.Vector2(s.normalScale, s.normalScale);
+  }
+  if (s.rough) mat.roughnessMap = load(s.rough);
+  return mat;
+}
+
+/**
  * Matériau de route : asphalte avec carte de normales et rugosité.
  *
  * La répétition est gérée par les UV du maillage : chaque sommet reçoit
@@ -60,48 +124,34 @@ export function roadMaterial(mapName = 'asphalt_02_diff_2k.jpg', normalName = 'a
   });
 }
 
-/** Matériau du gazon / terrain. */
-export function groundMaterial(mapName = 'grass_ground_diff_2k.jpg', normalName = 'grass_ground_nor_gl_2k.png') {
-  return new THREE.MeshStandardMaterial({
-    map: load(mapName, { srgb: true }),
-    normalMap: load(normalName),
-    roughness: 0.98,
-    metalness: 0.0,
-    normalScale: new THREE.Vector2(0.6, 0.6),
-  });
+/** Matériau du gazon / terrain tempéré. */
+export function groundMaterial() {
+  return solMaterial('grass');
 }
 
 /** Matériau de la neige (terrain). */
-export function snowMaterial(mapName = 'snow_02_diff_2k.jpg', normalName = 'snow_02_nor_gl_2k.png') {
-  return new THREE.MeshStandardMaterial({
-    map: load(mapName, { srgb: true }),
-    normalMap: load(normalName),
-    roughness: 0.85,
-    metalness: 0.0,
-    normalScale: new THREE.Vector2(0.45, 0.45),
-  });
+export function snowMaterial() {
+  return solMaterial('snow');
 }
 
 /** Matériau du sable (désert). */
-export function sandMaterial(mapName = 'sand_01_diff_2k.jpg', normalName = 'sand_01_nor_gl_2k.png') {
-  return new THREE.MeshStandardMaterial({
-    map: load(mapName, { srgb: true }),
-    normalMap: load(normalName),
-    roughness: 1.0,
-    metalness: 0.0,
-    normalScale: new THREE.Vector2(0.5, 0.5),
-  });
+export function sandMaterial() {
+  return solMaterial('sand');
 }
 
 /** Matériau de la roche (montagne). */
-export function rockMaterial(mapName = 'rock_face_diff_1k.jpg', normalName = 'rock_face_nor_gl_1k.png') {
-  return new THREE.MeshStandardMaterial({
-    map: load(mapName, { srgb: true }),
-    normalMap: load(normalName),
-    roughness: 1.0,
-    metalness: 0.0,
-    normalScale: new THREE.Vector2(0.8, 0.8),
-  });
+export function rockMaterial() {
+  return solMaterial('rock');
+}
+
+/** Matériau du gravier / run-off. */
+export function gravelMaterial() {
+  return solMaterial('gravel');
+}
+
+/** Matériau du béton (glissières, tribunes). */
+export function concreteMaterial() {
+  return solMaterial('concrete');
 }
 
 /**
@@ -122,26 +172,6 @@ export function eauMaterial() {
     // très lumineux près de l'horizon, et sans ce frein l'eau ne renvoie
     // qu'un reflet gris pâle — la teinte de la carte disparaît.
     envMapIntensity: 0.3,
-  });
-}
-
-/** Matériau du gravier / run-off. */
-export function gravelMaterial(mapName = 'gravel_road_diff_1k.jpg', normalName = 'gravel_road_nor_gl_1k.png') {
-  return new THREE.MeshStandardMaterial({
-    map: load(mapName, { srgb: true }),
-    normalMap: load(normalName),
-    roughness: 1.0,
-    metalness: 0.0,
-  });
-}
-
-/** Matériau du béton (glissières, tribunes). */
-export function concreteMaterial(mapName = 'concrete_diff_1k.jpg', roughName = 'concrete_rough_1k.jpg') {
-  return new THREE.MeshStandardMaterial({
-    map: load(mapName, { srgb: true }),
-    roughnessMap: load(roughName),
-    roughness: 0.9,
-    metalness: 0.0,
   });
 }
 

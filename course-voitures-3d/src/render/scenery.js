@@ -107,7 +107,7 @@ function solEn(track, x, z) {
  * environnement a ses espèces, ses teintes et ses densités : des palmiers
  * ou des sapins enneigés au milieu des dunes casseraient l'illusion.
  */
-const ENVS = {
+export const ENVS = {
   temperate: {
     pins: 0.45, feuillus: 0.35, cypres: 0.2, arbres: 340,
     rochers: 90, buissons: 150,
