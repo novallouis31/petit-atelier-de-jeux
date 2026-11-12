@@ -189,6 +189,33 @@ le circuit urbain. La boucle est fermée par construction, et `track.js` en
 déduit la géométrie 3D, la surface roulable, le sens de parcours et les
 points de contrôle.
 
+### Les environnements
+
+Chaque circuit porte un thème (`theme` dans `src/core/tracks.js`) : ciel,
+soleil, brouillard, **sol** et **environnement** (`theme.env`). Le thème
+pilote tout le rendu — la lumière, la couleur du ciel, le brouillard, les
+textures et le décor.
+
+| Environnement | Sol | Décor | Circuits |
+| --- | --- | --- | --- |
+| `temperate` | herbe | sapins, feuillus, buissons | 5 |
+| `lake` | herbe | idem, plus un lac | `genets` |
+| `snow` | neige | sapins enneigés, rochers givrés | `saut` |
+| `mountain` | roche | conifères sombres, pierres | `col` |
+| `desert` | sable | cactus, buissons secs | `horloge` |
+| `city` | béton | arbres d'alignement, stands | `village` |
+
+Le **lac** est un plan d'eau dont la rive naît de l'intersection avec le
+terrain : le sol descend en pente douce du côté de la vallée, et le plan
+passe sous lui. Rien ne pousse sous le niveau de l'eau.
+
+Les textures de sol viennent de Poly Haven (CC0) et sont versionnées dans
+`public/textures/` : `snow_02`, `sand_01` et `rock_face` ont été ajoutées
+pour les nouveaux environnements. La correspondance est centralisée dans
+la table `SOLS` (`src/render/textures.js`), ce qui permet à un test de
+vérifier que chaque environnement a bien sa texture — et que le fichier
+existe.
+
 ## Reste à faire
 
 - [ ] sons (moteur, adhérence, gravier) ;
