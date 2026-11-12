@@ -17,6 +17,15 @@ const OUT = join(ROOT, 'docs');
 const PORT = Number(process.argv[2]) || 4180;
 
 const server = createServer(async (req, res) => {
+  // La page (5173) et ce serveur (4180) sont d'origines différentes :
+  // sans CORS, le navigateur bloque la capture.
+  res.setHeader('access-control-allow-origin', '*');
+  res.setHeader('access-control-allow-headers', 'content-type');
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
   if (req.method !== 'POST') {
     res.writeHead(200, { 'content-type': 'text/plain' });
     res.end('Capture de l\'écran de jeu. POST un corps JSON {nom, data}.');

@@ -11,14 +11,19 @@ import assert from 'node:assert/strict';
 import { TRACKS, TRACK_IDS } from '../src/core/tracks.js';
 import { buildTrack } from '../src/core/track.js';
 
-test('les six circuits sont définis et valides', () => {
-  assert.equal(TRACK_IDS.length, 6);
+test('les dix circuits sont définis et valides', () => {
+  assert.equal(TRACK_IDS.length, 10);
   for (const id of TRACK_IDS) {
     const def = TRACKS[id];
     assert.ok(def.name.length > 0, `${id} : nom manquant`);
     assert.ok(def.blurb.length > 0, `${id} : description manquante`);
     assert.ok(def.width > 8, `${id} : route trop étroite`);
-    assert.ok(def.harmonics.length > 0, `${id} : forme absente`);
+    // Forme : harmoniques polaires ou polygone (circuit urbain).
+    assert.ok(
+      (def.harmonics && def.harmonics.length > 0) ||
+        (def.poly && def.poly.length >= 4),
+      `${id} : forme absente`
+    );
     assert.ok(def.theme, `${id} : thème absent`);
   }
 });

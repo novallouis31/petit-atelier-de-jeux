@@ -207,6 +207,155 @@ export const TRACKS = {
       ambient: 0x5f7386,
     },
   },
+
+  /* ------------------------------------------------------------------
+     Les circuits ci-dessous élargissent la gamme : un tracé d'esses, une
+     montagne, un crépuscule asymétrique et un circuit urbain à angles
+     droits (forme polygonale, pas harmonique).
+     ------------------------------------------------------------------ */
+
+  esses: {
+    id: 'esses',
+    name: 'Les Esses',
+    blurb: 'Des S enchaînés sans une seule ligne droite : la fluidité avant tout.',
+    blurbShort: 'En permanence en S',
+    rx: 104,
+    ry: 62,
+    harmonics: [
+      { n: 2, a: 0.10, p: 0.4 },
+      { n: 3, a: 0.06, p: 1.2 },
+      { n: 5, a: 0.04, p: 2.4 },
+      { n: 7, a: 0.018, p: 0.7 },
+    ],
+    elevation: [
+      { n: 1, a: 4.5, p: 0.9 },
+      { n: 3, a: 2.0, p: 2.0 },
+    ],
+    startT: 0.2,
+    width: 13.5,
+    runoff: 5.0,
+    spacing: 0.7,
+    bank: 0.4,
+    theme: {
+      sky: 0x8fc4ee,
+      horizon: 0xd8ecf8,
+      ground: 'grass',
+      sun: { azimuth: 1.4, elevation: 0.5 },
+      fog: { color: 0xc2dff0, density: 0.000062 },
+      key: 0xfff6e6,
+      fill: 0xa8d0f0,
+      ambient: 0x70879c,
+    },
+  },
+
+  col: {
+    id: 'col',
+    name: 'Le Col',
+    blurb: 'Une montée de 20 % de dénivelé, puis une descente à décrocher.',
+    blurbShort: 'Montagne, grand dénivelé',
+    rx: 104,
+    ry: 62,
+    harmonics: [
+      { n: 2, a: 0.14, p: 0.7 },
+      { n: 3, a: 0.06, p: 1.9 },
+      { n: 4, a: 0.02, p: 0.2 },
+    ],
+    elevation: [
+      { n: 1, a: 16.0, p: 0.5 },
+      { n: 2, a: 6.0, p: 2.2 },
+      { n: 3, a: 2.5, p: 1.1 },
+    ],
+    startT: 0.62,
+    width: 13.0,
+    runoff: 6.0,
+    spacing: 0.7,
+    bank: 0.5,
+    theme: {
+      sky: 0x9fc8e8,
+      horizon: 0xe2ecf4,
+      ground: 'gravel',
+      sun: { azimuth: 2.8, elevation: 0.35 },
+      fog: { color: 0xc8d8e4, density: 0.00008 },
+      key: 0xf2f6ff,
+      fill: 0x9ab8d8,
+      ambient: 0x5d6b7c,
+    },
+  },
+
+  horloge: {
+    id: 'horloge',
+    name: 'L’Horloge',
+    blurb: 'Un grand tour asymétrique, une épingle au cœur du circuit, au crépuscule.',
+    blurbShort: 'Crépuscule, épingle',
+    rx: 108,
+    ry: 60,
+    harmonics: [
+      { n: 2, a: 0.20, p: 1.1 },
+      { n: 3, a: 0.09, p: 0.3 },
+      { n: 5, a: 0.025, p: 2.0 },
+    ],
+    elevation: [
+      { n: 1, a: 6.0, p: 2.4 },
+      { n: 4, a: 3.0, p: 0.6 },
+    ],
+    startT: 0.45,
+    width: 14.0,
+    runoff: 5.5,
+    spacing: 0.7,
+    bank: 0.45,
+    theme: {
+      sky: 0x3a2f52,
+      horizon: 0xd98a5c,
+      ground: 'grass',
+      sun: { azimuth: 5.0, elevation: 0.12 },
+      fog: { color: 0x5a4a63, density: 0.00011 },
+      key: 0xffb37a,
+      fill: 0x6b5a80,
+      ambient: 0x2e2438,
+    },
+  },
+
+  village: {
+    id: 'village',
+    name: 'Le Village',
+    blurb: 'Un circuit urbain dans les rues du village : angles droits, murs proches.',
+    blurbShort: 'Urbain, angles droits',
+    /* Forme polygonale : des angles droits, impossibles avec des
+       harmoniques polaires qui ne produisent que des courbes douces. Les
+       angles sont raccordés par `planPoly` avec un congé de 13 m — comme
+       les virages d'un vrai circuit urbain. Toute arête dépasse 29 m pour
+       que le congé ne soit jamais bridé par ses voisines. */
+    poly: [
+      { x: 0, z: 0 },
+      { x: 120, z: 0 },
+      { x: 120, z: 58 },
+      { x: 72, z: 58 },
+      { x: 72, z: 28 },
+      { x: 42, z: 28 },
+      { x: 42, z: 58 },
+      { x: 0, z: 58 },
+    ],
+    elevation: [
+      { n: 1, a: 3.0, p: 0.3 },
+      { n: 2, a: 1.5, p: 1.4 },
+    ],
+    startT: 0.02,
+    width: 11.5,
+    runoff: 3.5,
+    spacing: 0.7,
+    bank: 0.18,
+    maxBank: 4,
+    theme: {
+      sky: 0xb8c4cc,
+      horizon: 0xd8dee2,
+      ground: 'concrete',
+      sun: { azimuth: 3.8, elevation: 0.42 },
+      fog: { color: 0xc4ccd2, density: 0.00009 },
+      key: 0xf4f6f8,
+      fill: 0xa8b4bc,
+      ambient: 0x5d666e,
+    },
+  },
 };
 
 export const TRACK_IDS = Object.keys(TRACKS);

@@ -13,6 +13,23 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
   aussi accessible par `npm start`). Il vérifie Node, installe les
   dépendances au premier lancement, démarre Vite, ouvre le navigateur, et
   réutilise un serveur déjà lancé au lieu d'en démarrer un second.
+- **Quatre nouveaux circuits** (dix au total) : Les Esses (enchaînement de
+  S), Le Col (montagne, grand dénivelé), L'Horloge (asymétrique, épingle,
+  crépuscule) et Le Village (urbain à angles droits, forme **polygonale**
+  avec congés — nouveau type de tracé dans `track.js`).
+- **Décor enrichi et instancié** : arbres (trois variétés), rochers,
+  buissons, lampadaires, balises de distance, panneaux publicitaires,
+  pneus empilés, tribunes, bâtiments des stands, portique de départ.
+  Tout passe par `InstancedMesh` : trois cents arbres ne coûtent que
+  quatre appels de dessin.
+- **Textures procédurales** (`src/render/proceduralTextures.js`) : bandes
+  rouge et blanc, bannières, pneus, tribunes, métal, rocher, écorce,
+  feuillage, peinture métallisée, carbone, numéro de course. La voiture
+  aussi est entièrement texturée (carrosserie pailletée, roues, jantes,
+  numéro sur le capot).
+- **Validation du rendu** (`src/render/validation.js`, testé sous Node) :
+  aucun objet du décor ni de la voiture ne peut rester sans texture ;
+  le résultat est exposé par `window.__game.validerRendu()`.
 
 ### Corrigé
 
@@ -21,6 +38,16 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
   n'était donc jamais enregistrée, sans aucune erreur. La correspondance
   clavier est désormais dans `src/core/input.js` (module pur, testé sous
   Node) et un test vérifie que chaque code mappé est un code valide.
+- **Glissières invisibles.** Le mur n'était dessiné que d'une seule face,
+  orientée vers l'extérieur : vue de la route, elle était éliminée par le
+  back-face culling — des murs fantômes que la physique bloquait quand
+  même. Le mur a maintenant trois faces (intérieure, extérieure, dessus)
+  en `DoubleSide`, plus un rail rayé.
+- **Sol troué.** Le terrain n'était qu'un anneau autour de la piste :
+  l'intérieur de la boucle et la bande entre route et glissière montraient
+  le ciel. Le terrain est désormais une grille complète (4 m de
+  résolution) qui couvre toute la zone, avec bandes de gravier (run-off)
+  entre la route et les murs.
 
 ## [0.2.0]
 

@@ -17,6 +17,13 @@
  */
 
 import * as THREE from 'three';
+import {
+  peintureTexture,
+  carboneTexture,
+  numeroTexture,
+  pneusTexture,
+  metalTexture,
+} from './proceduralTextures.js';
 
 /** Dimensions de la carrosserie (mètres). */
 const LONG = 4.3;
@@ -31,11 +38,14 @@ const DEMI_ESSIEU = LARGEUR * 0.45;
 /**
  * Carrosserie : caisse, habitacle, vitres, aileron, diffuseur, phares.
  */
-function buildBody(couleur, secondaire) {
+function buildBody(couleur, secondaire, numero = 1) {
   const group = new THREE.Group();
 
+  // La peinture porte une texture de paillettes : sans elle, la carrosserie
+  // est un aplat qui ne réagit pas à la lumière.
   const paint = new THREE.MeshPhysicalMaterial({
     color: couleur,
+    map: peintureTexture(),
     roughness: 0.3,
     metalness: 0.1,
     clearcoat: 0.9,
@@ -43,6 +53,7 @@ function buildBody(couleur, secondaire) {
   });
   const dark = new THREE.MeshStandardMaterial({
     color: secondaire,
+    map: carboneTexture(),
     roughness: 0.55,
     metalness: 0.2,
   });
@@ -140,13 +151,13 @@ function buildBody(couleur, secondaire) {
   }
 
   // Numéro de course sur le capot.
-  const numero = new THREE.Mesh(
+  const numeroMesh = new THREE.Mesh(
     new THREE.CircleGeometry(0.2, 20),
-    new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.65 })
+    new THREE.MeshStandardMaterial({ map: numeroTexture(numero), roughness: 0.65 })
   );
-  numero.rotation.x = -Math.PI / 2;
-  numero.position.set(0, 0.53, LONG * 0.34);
-  group.add(numero);
+  numeroMesh.rotation.x = -Math.PI / 2;
+  numeroMesh.position.set(0, 0.53, LONG * 0.34);
+  group.add(numeroMesh);
 
   group.userData.taillights = taillights;
   group.userData.headlights = headlights;
@@ -159,7 +170,7 @@ function buildWheel() {
 
   const pneu = new THREE.Mesh(
     new THREE.CylinderGeometry(ROUE_R, ROUE_R, ROUE_LARGEUR, 20),
-    new THREE.MeshStandardMaterial({ color: 0x131313, roughness: 0.95 })
+    new THREE.MeshStandardMaterial({ color: 0x131313, map: pneusTexture(), roughness: 0.95 })
   );
   // Le cylindre est orienté selon Y : on le tourne pour l'aligner sur X.
   pneu.rotation.z = Math.PI / 2;
@@ -168,7 +179,12 @@ function buildWheel() {
 
   const jante = new THREE.Mesh(
     new THREE.CylinderGeometry(ROUE_R * 0.6, ROUE_R * 0.6, ROUE_LARGEUR * 1.03, 16),
-    new THREE.MeshStandardMaterial({ color: 0xc2c6ce, roughness: 0.28, metalness: 0.9 })
+    new THREE.MeshStandardMaterial({
+      color: 0xc2c6ce,
+      map: metalTexture(),
+      roughness: 0.28,
+      metalness: 0.9,
+    })
   );
   jante.rotation.z = Math.PI / 2;
   group.add(jante);
@@ -177,7 +193,7 @@ function buildWheel() {
   for (let i = 0; i < 3; i++) {
     const rayon = new THREE.Mesh(
       new THREE.BoxGeometry(ROUE_LARGEUR * 1.06, ROUE_R * 0.86, 0.055),
-      new THREE.MeshStandardMaterial({ color: 0x242424, roughness: 0.9 })
+      new THREE.MeshStandardMaterial({ color: 0x242424, map: carboneTexture(), roughness: 0.9 })
     );
     rayon.rotation.x = (i * Math.PI) / 3;
     group.add(rayon);
@@ -188,7 +204,7 @@ function buildWheel() {
 
 /**
  * Construit une voiture complète.
- * @param {object} opts { couleur, secondaire }
+ * @param {object} opts { couleur, secondaire, numero }
  */
 export function buildCar(opts = {}) {
   const couleur = opts.couleur ?? 0xff5666;
@@ -199,7 +215,7 @@ export function buildCar(opts = {}) {
   // Le châssis porte le tangage et le roulis dynamiques ; les roues restent
   // au sol.
   const chassis = new THREE.Group();
-  const body = buildBody(couleur, secondaire);
+  const body = buildBody(couleur, secondaire, opts.numero ?? 1);
   chassis.add(body);
   root.add(chassis);
 
@@ -236,7 +252,7 @@ export function buildCar(opts = {}) {
 /** Vecteurs auxiliaires, réutilisés pour éviter les allocations par image. */
 const _forward = new THREE.Vector3();
 const _up = new THREE.Vector3();
-const _right = new THREE.Vector3();
+const _left = new THREE.Vector3();
 const _basis = new THREE.Matrix4();
 const _yaw = new THREE.Matrix4();
 const _invYaw = new THREE.Matrix4();
@@ -272,14 +288,21 @@ export function updateCarMesh(voiture, car, dt) {
   const nz = car.nz ?? 0;
   _up.set(nx, ny, nz).normalize();
 
-  // Axe droit : perpendiculaire à l'avant, dans le plan de la route.
-  _right.crossVectors(_forward, _up).normalize();
+  // Axe « gauche » : perpendiculaire à l'avant, dans le plan de la route.
+  //
+  // Attention au sens du produit vectoriel : `_up × _forward` donne la
+  // GAUCHE (et forme une base directe avec `_up` et `_forward`).
+  // `_forward × _up` donnerait la droite, mais la base serait alors **miroir**
+  // (déterminant −1) : le châssis était affiché en miroir, et le roulis
+  // apparaissait à l'envers — la voiture penchait vers l'intérieur du
+  // virage alors que la physique veut l'extérieur.
+  _left.crossVectors(_up, _forward).normalize();
 
   // Recompose une base orthonormée (l'axe haut est ré-orthogonalisé).
-  _up.crossVectors(_right, _forward).normalize();
+  _up.crossVectors(_forward, _left).normalize();
 
   // Base monde, puis passage dans le repère local du modèle.
-  _basis.makeBasis(_right, _up, _forward);
+  _basis.makeBasis(_left, _up, _forward);
   _yaw.makeRotationY(yaw);
   _invYaw.copy(_yaw).invert();
   _local.multiplyMatrices(_invYaw, _basis);
@@ -301,8 +324,10 @@ export function updateCarMesh(voiture, car, dt) {
   for (const r of roues) {
     r.roue.rotation.x += rotationRoue;
     // Les roues avant pivotent avec la direction.
-    // `steer > 0` = vers la droite ; la droite du modèle local est -X.
-    if (r.avant) r.pivot.rotation.y = car.steer;
+    // `steer > 0` = vers la droite. Le modèle local a +X vers la GAUCHE :
+    // une rotation positive autour de Y braque donc à gauche, d'où le signe
+    // moins.
+    if (r.avant) r.pivot.rotation.y = -car.steer;
   }
 
   // Feux arrière : ils s'allument au freinage.

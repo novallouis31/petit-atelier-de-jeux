@@ -30,6 +30,123 @@ function planPointAtT(t, def) {
   return { x: def.rx * r * Math.cos(a), z: def.ry * r * Math.sin(a) };
 }
 
+/**
+ * Échantillonneur de forme : polaire harmonique **ou** polygonale.
+ *
+ * La forme polygonale permet des circuits urbains, avec des angles droits —
+ * impossible avec des harmoniques, qui produisent toujours des courbes
+ * douces. Le paramètre `t` est alors l'abscisse curviligne normalisée, et
+ * tout le reste (tangentes, courbure, dévers) est calculé numériquement,
+ * exactement comme pour la forme harmonique.
+ */
+function createPlanSampler(def) {
+  if (def.poly) return planPoly(def);
+  return (t) => planPointAtT(t, def);
+}
+
+/**
+ * Forme polygonale : circuit urbain à angles droits.
+ *
+ * Les sommets vifs donneraient une courbure infinie — infranchissable pour
+ * la physique comme pour l'IA. Chaque angle est donc raccordé par un **congé**
+ * de rayon fixe (`cornerRadius`, 13 m par défaut), comme les virages des
+ * vrais circuits urbains : la rue tourne à 90°, la chaussée s'arrondit.
+ *
+ * Le paramètre `t` est l'abscisse curviligne normalisée, et tout le reste
+ * (tangentes, courbure, dévers) est calculé numériquement, exactement comme
+ * pour la forme harmonique.
+ */
+function planPoly(def) {
+  const R = def.cornerRadius ?? 13;
+  const src = def.poly;
+  const n = src.length;
+
+  /* ---- 1. congés : chaque sommet devient un arc ---- */
+  const contour = [];
+  for (let i = 0; i < n; i++) {
+    const p = src[i];
+    const prev = src[(i - 1 + n) % n];
+    const next = src[(i + 1) % n];
+
+    // Direction d'entrée et de sortie (unitaires, dans le plan XZ).
+    let d1x = p.x - prev.x;
+    let d1z = p.z - prev.z;
+    let d2x = next.x - p.x;
+    let d2z = next.z - p.z;
+    const l1 = Math.hypot(d1x, d1z) || 1;
+    const l2 = Math.hypot(d2x, d2z) || 1;
+    d1x /= l1; d1z /= l1; d2x /= l2; d2z /= l2;
+
+    // Angle tourné (0 = tout droit) et longueur tangente du congé.
+    const cos = clamp(d1x * d2x + d1z * d2z, -1, 1);
+    const phi = Math.acos(cos);
+    if (phi < 0.02) {
+      // Pratiquement colinéaire : on garde le sommet tel quel.
+      contour.push({ x: p.x, z: p.z });
+      continue;
+    }
+    let T = R * Math.tan(phi / 2);
+    // Un congé ne peut pas mordre plus de 45 % de l'arête la plus courte :
+    // deux congés adjacents ne se rencontrent jamais.
+    T = Math.min(T, 0.45 * l1, 0.45 * l2);
+
+    const ax = p.x - d1x * T; // début de l'arc
+    const az = p.z - d1z * T;
+    const bx = p.x + d2x * T; // fin de l'arc
+    const bz = p.z + d2z * T;
+
+    // Centre de l'arc : à distance T / tan(phi/2) de A, perpendiculaire à
+    // d1, du côté du virage (signe du produit vectoriel d1 × d2).
+    const turn = d1x * d2z - d1z * d2x;
+    const s = Math.sign(turn) || 1;
+    const rayon = T / Math.tan(phi / 2);
+    const nx = -d1z * s;
+    const nz = d1x * s;
+    const cx = ax + nx * rayon;
+    const cz = az + nz * rayon;
+
+    // Arc de A vers B, dans le sens du virage.
+    const a0 = Math.atan2(az - cz, ax - cx);
+    const a1 = Math.atan2(bz - cz, bx - cx);
+    let delta = a1 - a0;
+    if (s > 0) {
+      while (delta < 0) delta += TAU;
+      while (delta > TAU) delta -= TAU;
+    } else {
+      while (delta > 0) delta -= TAU;
+      while (delta < -TAU) delta += TAU;
+    }
+    const etapes = Math.max(2, Math.ceil((Math.abs(delta) * rayon) / 2));
+    contour.push({ x: ax, z: az });
+    for (let k = 1; k < etapes; k++) {
+      const a = a0 + (delta * k) / etapes;
+      contour.push({ x: cx + rayon * Math.cos(a), z: cz + rayon * Math.sin(a) });
+    }
+    contour.push({ x: bx, z: bz });
+  }
+
+  /* ---- 2. échantillonnage à abscisse curviligne ---- */
+  const m = contour.length;
+  const cum = [0];
+  for (let i = 1; i <= m; i++) {
+    const a = contour[i - 1];
+    const b = contour[i % m];
+    cum.push(cum[i - 1] + Math.hypot(b.x - a.x, b.z - a.z));
+  }
+  const total = cum[m];
+
+  return (t) => {
+    const cible = mod(t, 1) * total;
+    let i = 0;
+    while (i < m - 1 && cum[i + 1] < cible) i++;
+    const a = contour[i];
+    const b = contour[(i + 1) % m];
+    const longueur = cum[i + 1] - cum[i] || 1;
+    const f = (cible - cum[i]) / longueur;
+    return { x: lerp(a.x, b.x, f), z: lerp(a.z, b.z, f) };
+  };
+}
+
 /** Altitude du tracé pour le paramètre t. */
 function heightAtT(t, def) {
   if (!def.elevation || !def.elevation.length) return 0;
@@ -78,11 +195,13 @@ function norm(v) {
 }
 
 export function buildTrack(def) {
+  const planAtT = createPlanSampler(def);
+
   /* ---- 1. échantillonnage dense (plan + altitude) ---- */
   const dense = [];
   for (let i = 0; i < DENSE; i++) {
     const t = def.startT + i / DENSE;
-    const p = planPointAtT(t, def);
+    const p = planAtT(t);
     dense.push({ t, x: p.x, y: heightAtT(t, def), z: p.z });
   }
 

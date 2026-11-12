@@ -27,9 +27,10 @@ export function createScene(canvas, theme) {
     canvas,
     antialias: true,
     powerPreference: 'high-performance',
-    // Le buffer doit survivre après l'affichage d'une image : sans cela,
-    // la capture du canvas (screenshots, exports) revient vide.
-    preserveDrawingBuffer: true,
+    // Le buffer ne doit survivre à l'affichage que pour les captures
+    // (screenshots, validation). Garder cette option en permanence coûte une
+    // copie de framebuffer par image : on ne l'active que sur demande.
+    preserveDrawingBuffer: /[?&]capture=1/.test(window.location.search),
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -81,12 +82,13 @@ export function createScene(canvas, theme) {
   const dir = new THREE.DirectionalLight(theme.key, 3.2);
   dir.position.setFromSphericalCoords(180, phi, theta);
   dir.castShadow = true;
-  dir.shadow.mapSize.set(2048, 2048);
+  // 1024² et une zone resserrée : la shadow map est redessinée à chaque
+  // image, et à 2048² elle coûtait plus cher que le reste de la scène.
+  // À 60 m de demi-largeur, 1024 px donnent ~17 px/m — suffisant pour des
+  // ombres de voiture et d'arbre.
+  dir.shadow.mapSize.set(1024, 1024);
   dir.shadow.camera.near = 1;
   dir.shadow.camera.far = 260;
-  // La zone d'ombre est resserrée autour de la voiture : plus elle est
-  // petite, meilleure est la résolution de la shadow map, et moins les
-  // artefacts d'ombre sur le relief.
   const s = 60;
   dir.shadow.camera.left = -s;
   dir.shadow.camera.right = s;

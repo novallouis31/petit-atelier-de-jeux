@@ -7,9 +7,10 @@ relief et adversaires pilotés par une IA, autour de
 ![Course en 3D](docs/capture-circuit.png)
 
 > **État du projet — jouable.**
-> Le jeu se lance (`npm run dev`), les six circuits sont validés par le banc
+> Le jeu se lance (`npm run dev`), les dix circuits sont validés par le banc
 > d'essai IA, et le rendu 3D est en place : voiture, décor, caméra de
-> poursuite et effets de vitesse.
+> poursuite et effets de vitesse. Chaque objet du décor est texturé et un
+> validateur le vérifie à chaque chargement.
 
 ## Installation
 
@@ -68,7 +69,10 @@ src/core/ai.js        pilotes automatiques
 src/core/race.js      déroulement d'une course (tours, positions, arrivée)
 src/core/input.js     correspondance clavier → commandes de conduite
 src/render/scene.js   scène, lumières, ciel, post-traitement
-src/render/trackMesh.js  maillage de la route, vibreurs, glissières, décor
+src/render/trackMesh.js  route, vibreurs, glissières, terrain, run-off
+src/render/scenery.js     décor instancié (arbres, tribunes, panneaux…)
+src/render/proceduralTextures.js  textures dessinées au canvas 2D
+src/render/validation.js  valideur « chaque objet porte une texture »
 src/render/carMesh.js    modèle de voiture (construit par code)
 src/render/camera.js      caméra de poursuite
 src/render/effects.js     shader des effets de vitesse
@@ -110,6 +114,11 @@ respect des limites du circuit) et la construction géométrique des circuits.
 Les modules de `src/core/` sont **purs** : aucun accès au DOM, ce qui les rend
 utilisables sous Node pour des tests.
 
+Un test dédié (`tests/validation.test.js`) vérifie en plus que **chaque objet**
+du décor des dix circuits — et chaque pièce de la voiture — porte une texture :
+le validateur (`src/render/validation.js`) parcourt la scène et refuse tout
+matériau uni, sauf vitres et phares.
+
 ## Banc d'essai
 
 ```powershell
@@ -122,8 +131,8 @@ pourcentage hors piste, pertes de contrôle, blocages, écart maximal à l'axe
 et vitesses atteintes.
 
 Il sert de garde-fou : un circuit n'est livrable que si l'IA le boucle
-proprement. Les six circuits sont aujourd'hui validés (notes 93 à 97 sur 100,
-0 % hors piste, aucun blocage).
+proprement. Les dix circuits sont aujourd'hui validés (moyenne 93,2 sur 100,
+0 % hors piste hors circuit urbain, aucun blocage).
 
 ## IA
 
@@ -161,18 +170,24 @@ Unités SI strictes : mètres, kilogrammes, secondes, newtons.
 
 ## Circuits
 
-| Identifiant | Nom |
-| --- | --- |
-| `genets` | Boucle des Genêts |
-| `aiguille` | L'Aiguille |
-| `cigogne` | La Cigogne |
-| `escargot` | L'Escargot |
-| `onde` | L'Onde |
-| `saut` | Le Saut |
+| Identifiant | Nom | Environnement |
+| --- | --- | --- |
+| `genets` | Boucle des Genêts | prairie |
+| `aiguille` | L'Aiguille | prairie |
+| `cigogne` | La Cigogne | prairie |
+| `escargot` | L'Escargot | prairie |
+| `onde` | L'Onde | prairie |
+| `saut` | Le Saut | grande crête |
+| `esses` | Les Esses | enchaînement de virages |
+| `col` | Le Col | montagne |
+| `horloge` | L'Horloge | crépuscule |
+| `village` | Le Village | urbain |
 
-Chaque circuit est décrit par une forme en plan (harmoniques polaires) : la
-boucle est fermée par construction, et `track.js` en déduit la géométrie 3D,
-la surface roulable, le sens de parcours et les points de contrôle.
+Chaque circuit est décrit par une forme en plan — harmoniques polaires pour
+les tracés courbes, polygone à angles droits raccordés par des congés pour
+le circuit urbain. La boucle est fermée par construction, et `track.js` en
+déduit la géométrie 3D, la surface roulable, le sens de parcours et les
+points de contrôle.
 
 ## Reste à faire
 

@@ -153,6 +153,51 @@ relief projette une ombre sur tout ce qui est autour.
 la zone d'ombre est resserrée (60 m) pour améliorer la résolution de la
 shadow map.
 
+## 9. Le mur à une seule face
+
+**Symptôme** : les glissières n'existent pas à l'écran, alors que la
+physique bloque bien la voiture au même endroit — des murs fantômes.
+
+**Cause** : le mur n'était qu'un ruban à une seule face, orientée vers
+l'extérieur. Vue de la route (côté intérieur), le back-face culling
+éliminait chaque triangle : le mur était rendu, mais invisible de là où
+l'on regarde. Aucune erreur en console, évidemment.
+
+**Correction** : construire le mur comme un vrai volume (face intérieure,
+face extérieure, dessus, chacun avec ses propres sommets pour des normales
+propres) et poser `side: THREE.DoubleSide` en assurance. Le rail rayé du
+dessus suit la même règle.
+
+## 10. La répétition mutée d'une texture partagée
+
+**Symptôme** : régler `texture.repeat` pour un usage change l'échelle de
+la texture **partout ailleurs** — le gravier du run-off se met à la même
+échelle que celui du terrain, etc.
+
+**Cause** : les textures sont mises en cache par `textures.js` : le même
+objet `Texture` est référencé par plusieurs matériaux. `repeat` appartient
+à la texture, pas au matériau.
+
+**Correction** : ne jamais muter `repeat` d'une texture partagée ; coder
+l'échelle dans les **UV du maillage** (UV en mètres, divisés par la taille
+de tuile voulue). C'est le cas du terrain, du run-off et des glissières.
+
+## 11. Le terrain en anneau
+
+**Symptôme** : on voit le ciel sous la route, l'intérieur de la boucle est
+vide, « seul la route contient une texture au sol ».
+
+**Cause** : le terrain était un anneau polaire qui démarrait au-delà du
+run-off : tout l'intérieur de la boucle, et la bande entre la chaussée et
+la glissière, n'étaient couverts par rien.
+
+**Correction** : une grille rectangulaire qui couvre toute la zone du
+circuit (avec index spatial pour trouver le point de piste le plus proche
+de chaque sommet sans faire du quadratique), plus des bandes de gravier
+entre la route et les murs. La hauteur du terrain est une formule
+partagée (`src/render/terrainHeight.js`) : le décor utilise la même, sinon
+les arbres flottent ou s'enfoncent.
+
 ---
 
 ## Méthode de diagnostic

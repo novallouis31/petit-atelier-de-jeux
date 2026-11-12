@@ -43,6 +43,11 @@ class FakeContext2D {
   scale() {}
   rotate() {}
   measureText() { return { width: 10 }; }
+  strokeRect() { this.calls.push('strokeRect'); }
+  /** Dégradés : les textures procédurales en utilisent. */
+  createLinearGradient() { return { addColorStop() {} }; }
+  createRadialGradient() { return { addColorStop() {} }; }
+  createPattern() { return {}; }
 }
 
 class FakeElement {

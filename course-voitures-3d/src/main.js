@@ -16,6 +16,7 @@ import { Race, STEP, TOTAL_LAPS } from './core/race.js';
 import { KEYMAP, readInput as readInputFromKeys, toCarInput } from './core/input.js';
 import { createScene, resizeScene } from './render/scene.js';
 import { buildTrackScene, disposeTrackScene } from './render/trackMesh.js';
+import { validerScene } from './render/validation.js';
 import { buildCar, updateCarMesh, PLAYER_COLORS } from './render/carMesh.js';
 import { ChaseCamera, CAMERA_MODES } from './render/camera.js';
 import { SpeedEffects } from './render/effects.js';
@@ -135,6 +136,18 @@ function loadTrack(trackId) {
   etat.decor = buildTrackScene(etat.track);
   etat.ctx.scene.add(etat.decor);
 
+  // Tout objet du décor doit porter une texture : un matériau uni se voit
+  // immédiatement à l'écran, et c'est le genre de défaut que l'on repère
+  // trop tard. Le détail est disponible par `window.__game.validerRendu()`.
+  const rapport = validerScene(etat.decor);
+  if (!rapport.ok) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[rendu] ${rapport.nonTextures.length} matériau(x) sans texture :`,
+      rapport.nonTextures
+    );
+  }
+
   // Thème : le ciel, les lumières et le brouillard dépendent du circuit.
   applyTheme(def.theme);
 
@@ -197,6 +210,7 @@ function buildCars() {
     const mesh = buildCar({
       couleur: colors.couleur,
       secondaire: colors.secondaire,
+      numero: entry.index + 1,
     });
     mesh.traverse((obj) => {
       if (obj.isMesh) {
@@ -419,6 +433,29 @@ window.__game = {
     return {
       touches: [...keys],
       commandes: readInput(),
+    };
+  },
+  /**
+   * Validation du rendu : liste les objets dont le matériau n'a pas de
+   * texture. Utile pour vérifier un circuit après l'avoir modifié.
+   */
+  validerRendu() {
+    const decor = validerScene(etat.decor);
+    const voitures = etat.cars.length
+      ? validerScene(etat.cars[0].mesh)
+      : { meshes: 0, instanced: 0, triangles: 0, nonTextures: [], ok: true };
+    return {
+      ok: decor.ok && voitures.ok,
+      decor: {
+        meshes: decor.meshes,
+        triangles: decor.triangles,
+        nonTextures: decor.nonTextures,
+      },
+      voitures: {
+        meshes: voitures.meshes,
+        triangles: voitures.triangles,
+        nonTextures: voitures.nonTextures,
+      },
     };
   },
 };

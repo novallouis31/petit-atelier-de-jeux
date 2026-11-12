@@ -41,6 +41,7 @@ export class Interface {
       toast: $('toast'),
       trackGrid: $('trackGrid'),
       trackNote: $('trackNote'),
+      surTitre: $('surTitre'),
       aiLevel: $('aiLevel'),
       carCount: $('carCount'),
       btnStart: $('btnStart'),
@@ -181,6 +182,11 @@ export class Interface {
     const def = TRACKS[this.trackId];
     this.els.trackNote.textContent = def ? def.blurb : '';
     this.els.raceSub.textContent = `${TOTAL_LAPS} TOURS · ${this.cars} VOITURES`;
+    if (this.els.surTitre) {
+      this.els.surTitre.innerHTML =
+        `COURSE 3D <span class="sep">/</span> ${TRACK_IDS.length} CIRCUITS ` +
+        `<span class="sep">/</span> ${this.cars} VOITURES`;
+    }
   }
 
   showPanel(panel) {
