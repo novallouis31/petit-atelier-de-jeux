@@ -441,6 +441,26 @@ body {
   color: var(--texte-doux);
 }
 
+/* Environnement du circuit : une pastille dans la couleur du décor. */
+.piste-env {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+}
+
+.piste-env::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--env, var(--accent));
+}
+
 .note {
   font-size: 12px;
   color: var(--texte-doux);

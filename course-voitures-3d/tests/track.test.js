@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { TRACKS, TRACK_IDS } from '../src/core/tracks.js';
+import { TRACKS, TRACK_IDS, ENVIRONNEMENTS } from '../src/core/tracks.js';
 import { buildTrack } from '../src/core/track.js';
 
 test('les dix circuits sont définis et valides', () => {
@@ -183,4 +183,17 @@ test('chaque circuit a un environnement connu et la gamme est couverte', () => {
   for (const attendu of ['snow', 'mountain', 'desert', 'lake']) {
     assert.ok(vus.has(attendu), `aucun circuit en environnement « ${attendu} »`);
   }
+});
+
+test('chaque environnement a un nom et une couleur pour le menu', () => {
+  for (const id of TRACK_IDS) {
+    const env = TRACKS[id].theme.env ?? 'temperate';
+    const info = ENVIRONNEMENTS[env];
+    assert.ok(info, `${id} : l'environnement « ${env} » n'a pas d'entrée dans le menu`);
+    assert.ok(info.nom && info.nom.length > 2, `${id} : nom d'environnement manquant`);
+    assert.match(info.couleur, /^#[0-9a-f]{6}$/i, `${id} : couleur d'environnement invalide`);
+  }
+  // Deux environnements ne doivent pas porter le même nom.
+  const noms = Object.values(ENVIRONNEMENTS).map((e) => e.nom);
+  assert.equal(new Set(noms).size, noms.length, 'deux environnements portent le même nom');
 });

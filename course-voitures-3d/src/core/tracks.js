@@ -370,3 +370,18 @@ export const TRACKS = {
 
 export const TRACK_IDS = Object.keys(TRACKS);
 export const DEFAULT_TRACK = 'genets';
+
+/**
+ * Noms et couleurs des environnements (`theme.env`).
+ *
+ * Le menu s'en sert pour annoncer le décor d'un circuit ; la couleur sert
+ * à teinter la vignette du tracé.
+ */
+export const ENVIRONNEMENTS = {
+  temperate: { nom: 'Prairie', couleur: '#8fb4e0' },
+  lake: { nom: 'Bord du lac', couleur: '#6fb7c9' },
+  snow: { nom: 'Montagne enneigée', couleur: '#cfe3f2' },
+  mountain: { nom: 'Montagne', couleur: '#9aa7b5' },
+  desert: { nom: 'Désert', couleur: '#d9a066' },
+  city: { nom: 'Ville', couleur: '#b8b0c6' },
+};

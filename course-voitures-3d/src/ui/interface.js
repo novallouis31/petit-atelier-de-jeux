@@ -4,7 +4,7 @@
  * Tout le DOM est manipulé ici. Les modules `core/` n'en savent rien.
  */
 
-import { TRACKS, TRACK_IDS } from '../core/tracks.js';
+import { TRACKS, TRACK_IDS, ENVIRONNEMENTS } from '../core/tracks.js';
 import { AI_LEVELS } from '../core/ai.js';
 import { Race, TOTAL_LAPS } from '../core/race.js';
 
@@ -113,11 +113,13 @@ export class Interface {
   buildTrackGrid() {
     this.els.trackGrid.innerHTML = TRACK_IDS.map((id) => {
       const def = TRACKS[id];
+      const env = ENVIRONNEMENTS[def.theme.env];
       return `
         <button class="piste" type="button" data-track="${id}">
           <canvas class="piste-vignette" data-vignette="${id}" width="150" height="110"></canvas>
           <span class="piste-nom">${def.name}</span>
           <span class="piste-desc">${def.blurbShort}</span>
+          <span class="piste-env" style="--env:${env.couleur}">${env.nom}</span>
         </button>`;
     }).join('');
   }
@@ -149,7 +151,9 @@ export class Interface {
         else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.strokeStyle = '#8fb4e0';
+      // La couleur de la vignette annonce l'environnement du circuit.
+      const env = ENVIRONNEMENTS[TRACKS[id].theme.env];
+      ctx.strokeStyle = env.couleur;
       ctx.lineWidth = 5;
       ctx.lineJoin = 'round';
       ctx.stroke();
