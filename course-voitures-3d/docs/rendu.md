@@ -215,59 +215,67 @@ Les images dégradées se diagnostiquent par **mesure**, pas à l'œil :
 Une dernière prudence : `gl.readPixels` sur une cible en demi-flottant
 demande un `Uint16Array`, pas un `Float32Array`. Une lecture avec le mauvais
 type renvoie des zéros et fait croire à une scène noire.
-## 12. Le terrain perce la chaussÃ©e dÃ©versÃ©e
+## 12. Le terrain perce la chaussée déversée
 
-**SymptÃ´me** : sur les circuits Ã  dÃ©vers (Le Saut, Le Col), des triangles
-blancs/gris apparaissent au milieu de la chaussÃ©e, en escalier qui suit
+**Symptôme** : sur les circuits à dévers (Le Saut, Le Col), des triangles
+blancs/gris apparaissent au milieu de la chaussée, en escalier qui suit
 la courbe de la piste. Sur un sol d'herbe ou de gravier, on les voit
-Ã  peine ; sur la neige, ils sont Ã©clatants.
+à peine ; sur la neige, ils sont éclatants.
 
-**Cause** : la chaussÃ©e est inclinÃ©e sur le cÃ´tÃ© (dÃ©vers) : son altitude
-Ã  un dÃ©calage latÃ©ral l vaut p.y + p.ry * l. Le terrain, lui, Ã©tait
-calculÃ© depuis l'axe seul (p.y - 0,08 - ecart * 0,08) : il restait
-donc au-dessus de la chaussÃ©e inclinÃ©e du cÃ´tÃ© qui descend, et la
-perÃ§ait. Le dÃ©vers n'Ã©tait pas pris en compte.
+**Cause** : la chaussée est inclinée sur le côté (dévers) : son altitude
+à un décalage latéral l vaut p.y + p.ry * l. Le terrain, lui, était
+calculé depuis l'axe seul (p.y - 0,08 - ecart * 0,08) : il restait
+donc au-dessus de la chaussée inclinée du côté qui descend, et la
+perçait. Le dévers n'était pas pris en compte.
 
-**Correction** : hauteurTerrain reconstruit le plan tangent de la route
-(p.y + p.ry * latÃ©ral + p.ty * longitudinal) prÃ¨s de la piste (dans
-les 8 m du bord de chaussÃ©e), puis fond vers le profil libre au-delÃ  de
-30 m pour ne pas faire grimper le terrain en murÃ©e au loin. Le dÃ©cor
-passe dÃ©jÃ  loc.height (la hauteur au point projetÃ©) : il faut lui
-appliquer la mÃªme formule, sinon les objets flottent.
+**Correction** : le terrain part de la **projection** du point sur la
+piste (`track.locate`), c'est-à-dire du plan de la chaussée au droit de
+ce point : hauteur = projection + p.ry * latéral. Prolongé au loin, ce
+plan ferait grimper le terrain en murée du côté surélevé du dévers (et
+le versant d'en face passerait à l'ombre) : on le fond donc vers le
+profil libre au-delà du run-off.
 
-## 13. L'eau grise et dÃ©lavÃ©e
+Le maillage et le décor doivent utiliser **la même** projection, sinon
+les objets posés sur le sol flottent ou s'enfoncent : 3 m d'écart ont
+été mesurés sur un épingle, où le point le plus proche appartient à
+l'autre branche du virage. C'est le rôle de `track.locate()` et de
+`terrainHeight.js`, que `tests/terrain.test.js` vérifie sans
+navigateur : sous la chaussée, le long de la piste, et jusqu'au profil
+libre au loin.
 
-**SymptÃ´me** : le plan d'eau apparaÃ®t gris pÃ¢le Ã  l'Ã©cran alors que la
+## 13. L'eau grise et délavée
+
+**Symptôme** : le plan d'eau apparaît gris pâle à l'écran alors que la
 carte de couleur est bleu profond.
 
-**Cause** : la carte est dessinÃ©e avec putImageData (espace linÃ©aire
-par dÃ©faut) et chargÃ©e sans srgb: true : les valeurs sRGB sont
-interprÃ©tÃ©es en linÃ©aire, ce qui Ã©claircit tout. En plus, l'environnement
-Preetham est trÃ¨s lumineux prÃ¨s de l'horizon : sans bridage, l'eau ne
-renvoie qu'un reflet gris pÃ¢le et la teinte de la carte disparaÃ®t.
+**Cause** : la carte est dessinée avec putImageData (espace linéaire
+par défaut) et chargée sans srgb: true : les valeurs sRGB sont
+interprétées en linéaire, ce qui éclaircit tout. En plus, l'environnement
+Preetham est très lumineux près de l'horizon : sans bridage, l'eau ne
+renvoie qu'un reflet gris pâle et la teinte de la carte disparaît.
 
 **Correction** : eauTexture() avec srgb: true, carte de couleur
-assombrie (environ #0E334F), envMapIntensity 0.3, rugositÃ© 0.3. La carte
-de normales reste en linÃ©aire (c'est des donnÃ©es, pas des couleurs).
+assombrie (environ #0E334F), envMapIntensity 0.3, rugosité 0.3. La carte
+de normales reste en linéaire (c'est des données, pas des couleurs).
 
-## 14. La banniÃ¨re miroir
+## 14. La bannière miroir
 
-**SymptÃ´me** : le texte du portique de dÃ©part se lit Ã  l'envers quand on
+**Symptôme** : le texte du portique de départ se lit à l'envers quand on
 arrive sur la ligne.
 
 **Cause** : banniere.rotation.y = rotY faisait regarder la face avant
-du plan vers l'intÃ©rieur de la boucle ; vue de l'approche, le texte
-Ã©tait en miroir.
+du plan vers l'intérieur de la boucle ; vue de l'approche, le texte
+était en miroir.
 
 **Correction** : banniere.rotation.y = rotY + Math.PI.
 
 ## 15. Le run-off et le terrain partagent une texture
 
-**SymptÃ´me** : rÃ©gler texture.repeat pour le run-off change l'Ã©chelle
+**Symptôme** : régler texture.repeat pour le run-off change l'échelle
 de la texture partout (terrain inclus).
 
-**Cause** : gravelMaterial() et terrainMaterial() partagent les mÃªmes
-objets Texture mis en cache. repeat appartient Ã  la texture.
+**Cause** : gravelMaterial() et terrainMaterial() partagent les mêmes
+objets Texture mis en cache. repeat appartient à la texture.
 
-**Correction** : l'Ã©chelle est codÃ©e dans les UV du maillage (UV en
-mÃ¨tres, divisÃ©s par la taille de tuile), jamais dans texture.repeat.
+**Correction** : l'échelle est codée dans les UV du maillage (UV en
+mètres, divisés par la taille de tuile), jamais dans texture.repeat.

@@ -51,9 +51,13 @@ projet suit [Semantic Versioning](https://semver.org/lang/fr/).
 - **Terrain qui perçait la chaussée déversée.** Sur les circuits à dévers
   (Le Saut, Le Col), la chaussée est inclinée sur le côté : le terrain,
   calculé depuis l'axe seul, restait au-dessus de la chaussée inclinée et
-  la perçait d'un escalier de triangles. Le terrain suit désormais le plan
-  tangent de la route (dévers + pente longitudinale) près de la piste,
-  avant de retrouver son profil libre au loin.
+  la perçait d'un escalier de triangles. Le terrain part désormais de la
+  **projection** du point sur la piste (`track.locate`), fondue vers le
+  profil libre au-delà du run-off. Le maillage et le décor utilisent la
+  même projection : sans cela, les objets posés au sol flottaient de
+  plusieurs mètres dans les épingles. Un test headless
+  (`tests/terrain.test.js`) verrouille ce comportement — le défaut
+  n'apparaissait qu'à la capture, sans la moindre erreur en console.
 
 ## [0.2.0]
 

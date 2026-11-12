@@ -7,10 +7,10 @@
  */
 
 /**
- * @param {object} p       point de piste le plus proche (axe, avec
- *                         `rx, ry, rz` — l'axe latéral incluant le dévers —
- *                         quand il est disponible)
- * @param {number} distance distance horizontale à ce point
+ * @param {object} p       projection du point sur la piste : `x, y, z` du
+ *                         point projeté et axe latéral interpolé
+ *                         `rx, ry, rz` (le dévers est dans `ry`)
+ * @param {number} distance distance perpendiculaire à la piste
  * @param {number} half    demi-largeur de la piste en ce point
  * @param {number} x       coordonnée monde X du point
  * @param {number} z       coordonnée monde Z du point
@@ -20,29 +20,26 @@ export function hauteurTerrain(p, distance, half, x, z) {
   const bruit = Math.sin(x * 0.021) * Math.cos(z * 0.017) * 2.4;
   const liberte = Math.min(1, Math.max(0, (ecart - 12) / 40));
 
-  // Base : l'altitude de la chaussée **prolongée par son plan tangent** au
-  // niveau du point, pas celle de l'axe. Le dévers abaisse un côté de p.ry
-  // par mètre, la pente longitudinale fait monter ou descendre de p.ty par
-  // mètre : partir de l'axe seul laisse le terrain au-dessus de la chaussée
-  // inclinée, qui la perce d'un escalier de triangles.
-  //
-  // Mais le plan tangent ne vaut que près de la piste : prolongé au loin, il
-  // ferait grimper le terrain en murée du côté surélevé du dévers (et le
-  // versant d'en face passerait à l'ombre). On fond donc vers la formule
-  // libre au-delà du run-off.
+  // Base : la chaussée **prolongée par son dévers**, au droit de la
+  // projection. La chaussée est inclinée sur le côté (dévers) : partir de
+  // l'axe seul laissait le terrain au-dessus d'elle, et il la perçait d'un
+  // escalier de triangles (spectacle très visible sur la neige).
   let base = p.y;
   if (p.ry && p.rx !== undefined) {
-    const dx = x - p.x;
-    const dz = z - p.z;
-    const lateral = dx * p.rx + dz * p.rz;
-    const leLong = p.tx !== undefined ? dx * p.tx + dz * p.tz : 0;
-    const plan = p.y + p.ry * lateral + p.ty * leLong;
-    // 1 jusqu'à 8 m du bord de chaussée, 0 au-delà de 30 m (courbe en S).
+    const lateral = (x - p.x) * p.rx + (z - p.z) * p.rz;
+    const plan = p.y + p.ry * lateral;
+    // Le plan de la chaussée ne vaut que près de la piste : prolongé au
+    // loin, il ferait grimper le terrain en murée du côté surélevé du
+    // dévers (et le versant d'en face passerait à l'ombre). On fond donc
+    // vers le profil libre au-delà du run-off.
     const t = Math.min(1, Math.max(0, (ecart - 8) / 22));
     const pond = 1 - t * t * (3 - 2 * t);
     base = p.y + pond * (plan - p.y);
   }
-  return base - 0.08 - ecart * 0.08 + bruit * liberte;
+  // Marge sous la chaussée : 18 cm. Assez pour que la grille de terrain
+  // (4 m de côté) ne perce jamais la route, même là où la coupe locale et
+  // la projection diffèrent de quelques centimètres (courbes serrées).
+  return base - 0.18 - ecart * 0.08 + bruit * liberte;
 }
 
 /**

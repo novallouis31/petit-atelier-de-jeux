@@ -445,50 +445,6 @@ function buildTerrain(track, theme) {
   const nx = Math.ceil((maxX - minX) / pas) + 1;
   const nz = Math.ceil((maxZ - minZ) / pas) + 1;
 
-  /* Index spatial des points de piste : chercher le point le plus proche
-     pour chaque sommet de la grille serait quadratique (13 000 × 1 500). */
-  const cellule = 25;
-  const index = new Map();
-  const cle = (ix, iz) => ix + ':' + iz;
-  for (let i = 0; i < track.N; i++) {
-    const p = track.pts[i];
-    const k = cle(Math.floor(p.x / cellule), Math.floor(p.z / cellule));
-    if (!index.has(k)) index.set(k, []);
-    index.get(k).push(i);
-  }
-
-  /** Point de piste le plus proche, par couronnes de cellules. */
-  function pointProche(x, z) {
-    const ix = Math.floor(x / cellule);
-    const iz = Math.floor(z / cellule);
-    let meilleur = -1;
-    let meilleurD2 = Infinity;
-    for (let rayon = 0; rayon <= 8; rayon++) {
-      for (let dx = -rayon; dx <= rayon; dx++) {
-        for (let dz = -rayon; dz <= rayon; dz++) {
-          if (Math.max(Math.abs(dx), Math.abs(dz)) !== rayon) continue;
-          const liste = index.get(cle(ix + dx, iz + dz));
-          if (!liste) continue;
-          for (const i of liste) {
-            const p = track.pts[i];
-            const d2 = (p.x - x) ** 2 + (p.z - z) ** 2;
-            if (d2 < meilleurD2) { meilleurD2 = d2; meilleur = i; }
-          }
-        }
-      }
-      if (meilleur >= 0) break;
-    }
-    if (meilleur < 0) {
-      // Repli : balayage complet (ne devrait pas arriver).
-      for (let i = 0; i < track.N; i++) {
-        const p = track.pts[i];
-        const d2 = (p.x - x) ** 2 + (p.z - z) ** 2;
-        if (d2 < meilleurD2) { meilleurD2 = d2; meilleur = i; }
-      }
-    }
-    return { p: track.pts[meilleur], d: Math.sqrt(meilleurD2) };
-  }
-
   const positions = [];
   const uvs = [];
   const indices = [];
@@ -498,13 +454,22 @@ function buildTerrain(track, theme) {
     for (let ix = 0; ix < nx; ix++) {
       const x = minX + ix * pas;
       const z = minZ + iz * pas;
-      const { p, d } = pointProche(x, z);
-      const ecart = Math.max(0, d - p.half);
+
+      // Même projection que le décor (`scenery.js`) : le terrain et les
+      // objets posés dessus partagent alors exactement la même hauteur.
+      const loc = track.locate(x, z, -1);
+      const ecart = Math.max(0, loc.dist - loc.half);
 
       // Sous la route et jusqu'au run-off, le sol est juste sous la
       // chaussée. Ensuite il s'éloigne en pente douce, avec un peu de relief
       // pour ne pas ressembler à une galette.
-      const hauteur = hauteurTerrain(p, d, p.half, x, z);
+      const hauteur = hauteurTerrain(
+        { x: loc.px, y: loc.py, z: loc.pz, rx: loc.rx, ry: loc.ry, rz: loc.rz },
+        loc.dist,
+        loc.half,
+        x,
+        z
+      );
 
       positions.push(x, hauteur, z);
       uvs.push(x / 12, z / 12);

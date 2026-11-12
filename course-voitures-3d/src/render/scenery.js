@@ -81,16 +81,18 @@ function instancier(geo, mat, transforms, depot, { ombre = true, teinte = false 
 /** Hauteur du sol en un point, d'après la géométrie de la piste. */
 function solEn(track, x, z) {
   const loc = track.locate(x, z, -1);
-  // Même formule que le maillage du terrain (terrainHeight.js), avec le
-  // plan tangent reconstruit depuis la projection sur l'axe : le décor
-  // repose exactement sur le sol dessiné, dévers et pente compris.
+  // Même formule, même projection que le maillage du terrain
+  // (`terrainHeight.js`) : le décor repose exactement sur le sol dessiné,
+  // dévers et pente compris.
   return {
     loc,
-    sol: hauteurTerrain({
-      x: loc.px, y: loc.py, z: loc.pz,
-      rx: loc.rx, ry: loc.ry, rz: loc.rz,
-      tx: loc.tx, ty: loc.ty, tz: loc.tz,
-    }, loc.dist, loc.half, x, z),
+    sol: hauteurTerrain(
+      { x: loc.px, y: loc.py, z: loc.pz, rx: loc.rx, ry: loc.ry, rz: loc.rz },
+      loc.dist,
+      loc.half,
+      x,
+      z
+    ),
   };
 }
 
@@ -344,7 +346,7 @@ function buildEquipements(track, depot, zone, rnd) {
     const d = marge + 3;
     const x = p.x + p.rx * d * side;
     const z = p.z + p.rz * d * side;
-    const sol = hauteurTerrain(p, d, p.half, x, z);
+    const sol = solEn(track, x, z).sol;
     poteaux.push({ x, y: sol + 3.5, z, echelle: 1 });
     tetes.push({ x, y: sol + 7.0, z, echelle: 1, rotY: Math.atan2(p.tx, p.tz) });
   }
@@ -365,7 +367,7 @@ function buildEquipements(track, depot, zone, rnd) {
       const d = marge - 0.4;
       const x = p.x + p.rx * d * side;
       const z = p.z + p.rz * d * side;
-      const sol = hauteurTerrain(p, d, p.half, x, z);
+      const sol = solEn(track, x, z).sol;
       balises.push({ x, y: sol + 0.55, z, echelle: 1, rotY: Math.atan2(p.tx, p.tz) });
     }
   }
@@ -403,7 +405,7 @@ function buildEquipements(track, depot, zone, rnd) {
     const d = marge + 5;
     const x = p.x + p.rx * d * side;
     const z = p.z + p.rz * d * side;
-    const sol = hauteurTerrain(p, d, p.half, x, z);
+    const sol = solEn(track, x, z).sol;
     // Le panneau regarde vers la piste.
     const rotY = Math.atan2(-side * p.rx, -side * p.rz);
     parVariante[k % BANNIERES.length].push({ x, y: sol + 2.6, z, echelle: 1, rotY });
@@ -433,7 +435,7 @@ function buildEquipements(track, depot, zone, rnd) {
     const d = marge + 2;
     const x = p.x + p.rx * d * side;
     const z = p.z + p.rz * d * side;
-    const sol = hauteurTerrain(p, d, p.half, x, z);
+    const sol = solEn(track, x, z).sol;
     pneus.push({ x, y: sol + 0.42, z, echelle: 1, rotY: rnd() * Math.PI });
   }
   instancier(pneuGeo, pneuMat, pneus, depot);
@@ -458,7 +460,7 @@ function buildTribunes(track, depot, zone) {
     const d = marge + 14;
     const x = p.x + p.rx * d;
     const z = p.z + p.rz * d;
-    const sol = hauteurTerrain(p, d, p.half, x, z);
+    const sol = solEn(track, x, z).sol;
     const rotY = Math.atan2(p.tx, p.tz);
     bases.push({ x, y: sol + 2.5, z, echelle: 1, rotY });
     toits.push({ x, y: sol + 7.4, z, echelle: 1, rotY });
@@ -477,7 +479,7 @@ function buildTribunes(track, depot, zone) {
     const d = marge + 20;
     const x = p.x - p.rx * d;
     const z = p.z - p.rz * d;
-    const sol = hauteurTerrain(p, d, p.half, x, z);
+    const sol = solEn(track, x, z).sol;
     const rotY = Math.atan2(p.tx, p.tz);
     batiments.push({ x, y: sol + 3, z, echelle: 1, rotY });
     batToits.push({ x, y: sol + 6.2, z, echelle: 1, rotY });
