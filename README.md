@@ -38,14 +38,14 @@ course-voitures/index.html  → ouvrir directement dans le navigateur
 
 Pour un serveur local (utile si le navigateur bloque certaines ressources) :
 
-```powershell
+```bash
 python -m http.server 8000
 # puis http://localhost:8000/selene7/
 ```
 
 Le projet 3D nécessite Node.js :
 
-```powershell
+```bash
 cd course-voitures-3d
 npm install
 npm run fetch-textures   # textures CC0 (Poly Haven), ~40 Mo
@@ -60,7 +60,7 @@ npm run fetch-textures   # textures CC0 (Poly Haven), ~40 Mo
 ├── course-voitures/      # Grand Prix 2D (jeu complet)
 ├── course-voitures-3d/   # Jeu de course 3D (jeu complet)
 ├── tools/setup-git.mjs   # application de la configuration Git du dépôt
-├── tools/publish-github.ps1 # publication du dépôt sur GitHub (PAT)
+├── tools/publish-github.py # publication du dépôt sur GitHub (PAT)
 ├── tools/GITKRAKEN.md    # guide d'utilisation de GitKraken
 ├── .gitattributes        # normalisation des fins de ligne
 ├── .gitconfig-projet     # réglages Git propres au dépôt
@@ -85,7 +85,7 @@ sous Windows, Linux et macOS :
 - **`tools/setup-git.mjs`** l'applique avec `git config --local` — donc sans
   toucher à la configuration globale de la machine :
 
-```powershell
+```bash
 node tools/setup-git.mjs
 ```
 
@@ -99,10 +99,9 @@ complet (création du Personal Access Token, clone, push, pull request,
 résolution de conflits, dépannage) est dans
 [`tools/GITKRAKEN.md`](tools/GITKRAKEN.md).
 
-```powershell
+```bash
 # publication (crée le dépôt GitHub s'il n'existe pas)
-powershell -ExecutionPolicy Bypass -File tools\publish-github.ps1 `
-    -Repo petit-atelier-de-jeux -Token ghp_VOTRE_JETON -Tags
+python3 tools/publish-github.py --repo petit-atelier-de-jeux --token ghp_VOTRE_JETON --tags
 ```
 
 Le jeton est stocké chiffré par GitKraken, jamais dans le dépôt ; le script
