@@ -7,7 +7,7 @@ framework ni build (scripts classiques).
 
 Ouvrez `index.html` dans un navigateur récent, ou servez le dossier :
 
-```powershell
+```bash
 python -m http.server 8000
 # puis http://localhost:8000/tzolkin/
 ```
@@ -17,7 +17,7 @@ ouvrant `index.html`, ou via le serveur HTTP ci-dessus.
 
 ## Tests
 
-```powershell
+```bash
 node --test tests/          # 50 tests
 node tests/stress.js 300    # banc d'essai : 300 parties simulees
 ```

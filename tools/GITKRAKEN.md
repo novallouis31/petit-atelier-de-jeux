@@ -14,7 +14,7 @@ egalement disponible pour les operations scriptables.
 | Fins de ligne | LF partout (garanti par `.gitattributes`) |
 | Configuration Git | `.gitconfig-projet`, appliquee par `tools/setup-git.mjs` |
 
-```powershell
+```bash
 node tools/setup-git.mjs
 ```
 
@@ -34,7 +34,7 @@ Perimetres : `repo` (ou `public_repo` si le depot est public).
 
 Dans la CLI GitKraken :
 
-```powershell
+```bash
 gk provider add github -t ghp_VOTRE_JETON
 gk provider list
 ```
@@ -44,21 +44,25 @@ Dans l'interface : **File > Preferences > Authentication** > **+** >
 
 ## Publier le depot
 
-```powershell
+```bash
 # publication complete (cree le depot GitHub s'il n'existe pas)
-powershell -ExecutionPolicy Bypass -File tools\publish-github.ps1 `
-    -Repo petit-atelier-de-jeux -Token ghp_VOTRE_JETON -Tags
+python3 tools/publish-github.py --repo petit-atelier-de-jeux \
+    --token ghp_VOTRE_JETON --tags
 ```
 
 Le script verifie avant le push qu'aucun secret n'est versionne, cree le
 depot si besoin, configure le remote `origin` et pousse la branche ainsi que
 les tags. Le jeton n'est jamais ecrit dans `.git/config`.
 
-Si le jeton est deja enregistre dans GitKraken, utiliser `-UseGitKraken` :
+Le jeton peut aussi etre fourni par la variable d'environnement
+`GITHUB_TOKEN` (plus sur pour l'historique du shell).
 
-```powershell
-powershell -ExecutionPolicy Bypass -File tools\publish-github.ps1 `
-    -Repo petit-atelier-de-jeux -UseGitKraken -Tags
+Si le jeton est deja enregistre dans GitKraken, l'enregistrement se fait
+automatiquement lors de la premiere publication :
+
+```bash
+python3 tools/publish-github.py --repo petit-atelier-de-jeux \
+    --token ghp_VOTRE_JETON --tags
 ```
 
 ## Operations courantes
@@ -75,7 +79,7 @@ powershell -ExecutionPolicy Bypass -File tools\publish-github.ps1 `
 
 ## Avant de commiter
 
-```powershell
+```bash
 # 1. tests du projet 3D
 cd course-voitures-3d; npm test
 
@@ -89,7 +93,7 @@ git status
 Les tests utilisent le Node local du depot si Node 20+ n'est pas dans le
 `PATH` :
 
-```powershell
+```bash
 $env:Path="$PWD\.tools\node-v26.13.0-win-x64;$env:Path"
 ```
 
@@ -105,6 +109,6 @@ $env:Path="$PWD\.tools\node-v26.13.0-win-x64;$env:Path"
 
 Test rapide de l'authentification :
 
-```powershell
+```bash
 git ls-remote origin
 ```

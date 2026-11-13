@@ -20,7 +20,7 @@ le serveur et ouvre le navigateur. Fermer la fenêtre arrête le jeu.
 
 En ligne de commande :
 
-```powershell
+```bash
 cd course-voitures-3d
 npm install
 npm run dev
@@ -103,7 +103,7 @@ Le raisonnement complet est dans [`docs/architecture.md`](docs/architecture.md).
 
 ## Tests
 
-```powershell
+```bash
 npm test
 ```
 
@@ -121,7 +121,7 @@ matériau uni, sauf vitres et phares.
 
 ## Banc d'essai
 
-```powershell
+```bash
 npm run bench
 ```
 
