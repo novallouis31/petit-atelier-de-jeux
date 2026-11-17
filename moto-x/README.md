@@ -41,17 +41,28 @@ dans le navigateur (`localStorage`, clé `motox.save.v1`).
 
 ## Physique
 
-- la moto est un **corps rigide** (châssis + deux roues soudées) avec masse,
-  inertie et couple ; les contacts sont résolus à impulsion sur un terrain en
-  polyligne (normale de surface, restitution faible, correction de position) ;
-- **adhérence de Coulomb** : la force de traction est limitée par
-  `µ · N` (µ ≈ 1,15) — trop d'accélération et la roue arrière patine,
-  trop de frein et ça dérape ;
-- **couple moteur sur la roue** avec glissement : la roue accélère, le
-  frottement transforme la rotation en avance ; le patinage projette de la terre ;
-- l'accélération et le freinage font naturellement cabrer / piquer la moto
-  (la poussée s'applique au niveau du sol, sous le centre de masse) ;
-  l'équilibre `←` / `→` complète en l'air comme au sol ;
+- **châssis + masses non suspendues** : le châssis (masse 140 kg, inertie propre)
+  porte deux roues de 8 kg reliées par une vraie **suspension ressort-amortisseur**
+  le long de l'axe vertical local (raideur 18 kN/m, amortissement compression /
+  détente distincts, course 5→34 cm, butées renforcées) ; les roues bougent
+  donc réellement par rapport au véhicule, et le bras oscillant / la fourche
+  sont dessinés articulés sur la course ;
+- **pneu modélisé** : raideur de contact + amortissement, force limitée
+  (écrêtage à 9 kN) — les atterrissages s'écrasent dans le pneu puis dans la
+  suspension au lieu de faire de violents à-coups de tangage ;
+- **adhérence de Coulomb lissée** : la traction est limitée par `µ · N`
+  (µ = 1,0) avec une zone de glissement progressive — trop de gaz et la roue
+  arrière patine (terre projetée), trop de frein et ça dérape ;
+- **transmission des efforts** : la composante le long de l'axe de suspension
+  comprime le ressort, la composante longitudinale remonte au châssis à
+  l'ancrage — d'où cabrage à l'accélération, stoppie au freinage et
+  **transferts de charge** réalistes en appui ;
+- **inertie** : masse et inertie accrues, la moto garde son mouvement (une
+  rotation engagée en l'air se poursuit et se corrige aux flèches) ; au
+  franchissement d'un sommet la moto prend la courbure du terrain (nez qui
+  tombe au décollage) — anticipez comme en vrai ;
+- moteur sur la roue arrière avec **limiteur de régime** (plus de couple au-delà),
+  freinage des deux roues, équilibre du pilote au sol et en l'air ;
 - intégration à pas fixe **1/240 s**, indépendante du taux de rafraîchissement ;
 - points fatals : casque et guidon — tout contact avec le sol est fatal ;
   chute hors du monde = chute mortelle.
@@ -66,4 +77,6 @@ dans le navigateur (`localStorage`, clé `motox.save.v1`).
 
 En haut de `game.js` : `ENGINE_TQ` (couple moteur), `BRAKE_TQ` (freinage),
 `MU` (adhérence), `LEAN_GND` / `LEAN_AIR` (équilibre), `REACT_K` (tendance au
-cabrage), `RESTITUTION` (rebond des roues).
+cabrage), `SUSP_K` / `SUSP_C` / `SUSP_CR` (raideur et amortissements de
+suspension), `SUSP_REST` / `SUSP_MIN` / `SUSP_MAX` (course), `TIRE_K` / `TIRE_C`
+(pneu), `TIRE_FMAX` (plafond d'effort pneu).

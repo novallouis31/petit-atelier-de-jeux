@@ -281,10 +281,13 @@ function persist() {
    État de jeu + moto (corps rigide)
    -------------------------------------------------------------------------- */
 
-const G = 9.81, M = 130, I = 30, I_W = 0.5, WHEEL_R = 0.36;
+const G = 9.81, M = 140, I = 36, I_W = 0.5, WHEEL_R = 0.36, WHEEL_M = 8;
 const ENGINE_TQ = 400, OMEGA_MAX = 95, BRAKE_TQ = 360;
-const MU = 1.0, RESTITUTION = 0.12;
-const LEAN_GND = 520, LEAN_AIR = 700, REACT_K = 0.35;
+const MU = 1.0, LEAN_GND = 640, LEAN_AIR = 700, REACT_K = 0.6;
+// suspension : ressort + amortisseur par roue (axe de suspension local),
+// pneu modélisé comme une raideur de contact, butées de course renforcées
+const SUSP_K = 18000, SUSP_C = 1300, SUSP_CR = 900, SUSP_REST = 0.16, SUSP_MIN = 0.05, SUSP_MAX = 0.34;
+const KSTOP = 140000, TIRE_K = 60000, TIRE_C = 700, TIRE_FMAX = 9000, SLIP_REF = 0.35;
 
 const game = {
   mode: 'menu',          // menu | flying | paused | finished | dead
@@ -302,8 +305,8 @@ const bike = {
   x: 0, y: 0, vx: 0, vy: 0, th: 0, om: 0,
   dir: 1, dirVis: 1, flipCd: 0, leanVis: 0,
   wheels: [
-    { lx: -0.71, ly: -0.28, om: 0, phi: 0, jn: 0, slip: 0, wasGround: false },
-    { lx: 0.71, ly: -0.28, om: 0, phi: 0, jn: 0, slip: 0, wasGround: false }
+    { lx: -0.71, ly: -0.28, s: SUSP_REST, sv: 0, om: 0, phi: 0, jn: 0, slip: 0, wasGround: false },
+    { lx: 0.71, ly: -0.28, s: SUSP_REST, sv: 0, om: 0, phi: 0, jn: 0, slip: 0, wasGround: false }
   ]
 };
 
@@ -332,6 +335,7 @@ function resetBike() {
   bike.vx = 0; bike.vy = 0; bike.th = 0; bike.om = 0;
   bike.dir = 1; bike.dirVis = 1; bike.flipCd = 0; bike.leanVis = 0;
   for (const w of bike.wheels) {
+    w.s = SUSP_REST; w.sv = 0;
     w.om = 0; w.phi = 0; w.jn = 0; w.slip = 0; w.wasGround = false;
   }
   particles.length = 0;
@@ -396,60 +400,83 @@ function sampleTerrain(x) {
   return _samp;
 }
 
-// contact roue : impulsion normale + impulsion de frottement (Coulomb),
-// moteur et frein agissent sur la rotation de la roue (glissement réel)
-function solveWheel(w, dt) {
+// roue = masse non-suspendue reliée au châssis par un ressort-amortisseur
+// (le long de l'axe de suspension local) ; l'axe avant est rigide : les
+// efforts de contact se décomposent — composante le long de l'axe de
+// suspension → course de la roue, composante transversale → châssis (à l'ancre)
+const _ch = { fx: 0, fy: 0, tq: 0 };
+
+function stepWheel(w, dt) {
   const b = bike;
-  const wx = b.x + Math.cos(b.th) * b.dir * w.lx - Math.sin(b.th) * w.ly;
-  const wy = b.y + Math.sin(b.th) * b.dir * w.lx + Math.cos(b.th) * w.ly;
-  const s = sampleTerrain(wx);
-  const d = s.ny * (wy - s.y);
-  const pen = WHEEL_R - d;
-  w.jn = 0; w.slip = 0;
-  if (pen <= 0) { w.wasGround = false; return false; }
+  const c = Math.cos(b.th), s = Math.sin(b.th);
+  const axl = b.dir * w.lx, ayl = w.ly + SUSP_REST;   // ancre locale (au-dessus du repos)
+  const arx = c * axl - s * ayl, ary = s * axl + c * ayl;
+  const apx = b.x + arx, apy = b.y + ary;
+  const avx = b.vx - b.om * ary, avy = b.vy + b.om * arx;
+  const dxn = s, dny = -c;        // axe de suspension (vers le bas local)
+  const fxx = c, fxy = s;         // axe avant (rigide)
 
-  const rx = wx - b.x, ry = wy - b.y;
-  const c = Math.cos(b.th), sn = Math.sin(b.th);
-  const vx = b.vx - b.om * ry;
-  const vy = b.vy + b.om * rx;
-  const vn = vx * s.nx + vy * s.ny;
+  // centre de la roue : ancre + axe de suspension * course
+  const wx = apx + dxn * w.s;
+  const wy = apy + dny * w.s;
+  const wvx = avx + dxn * w.sv + b.om * fxx * w.s;
+  const wvy = avy + dny * w.sv + b.om * fxy * w.s;
 
-  // impulsion normale (petite restitution, correction de position douce)
-  const rn = rx * s.ny - ry * s.nx;
-  const Kn = 1 / M + rn * rn / I;
-  let jn = Math.max(0, -(1 + RESTITUTION) * vn / Kn);
-  if (pen > 0.004) {
-    const corr = Math.min(pen * 0.55, 0.05);
-    b.x += s.nx * corr; b.y += s.ny * corr;
-  }
-  if (jn > 0) {
-    b.vx += s.nx * jn / M;
-    b.vy += s.ny * jn / M;
-    b.om += rn * jn / I;
-    w.jn = jn;
-    if (!w.wasGround && jn > 1600) {
-      sfx.thud(clamp(jn / 9000, 0.05, 0.6));
-      game.shake = Math.max(game.shake, clamp(jn / 7000, 0, 0.45));
-      spawnDust(wx, wy - WHEEL_R * 0.4, Math.min(10, Math.round(jn / 400)));
+  // ressort + amortisseur (effort sur la roue, le long de d̂) + butées.
+  // En compression le ressort pousse ; en extension il est mou (détente
+  // amortie seulement), comme une vraie fourche / un vrai bras oscillant.
+  let Fs = 0;
+  if (w.s < SUSP_REST) Fs = SUSP_K * (SUSP_REST - w.s) - SUSP_C * w.sv;
+  else Fs = -SUSP_CR * w.sv;
+  if (w.s < SUSP_MIN) Fs += KSTOP * (SUSP_MIN - w.s);
+  if (w.s > SUSP_MAX) Fs -= KSTOP * (w.s - SUSP_MAX);
+
+  // contact pneu/sol : raideur de pneu + frottement de Coulomb lissé
+  const smp = sampleTerrain(wx);
+  const distN = smp.ny * (wy - smp.y);
+  const pen = WHEEL_R - distN;
+  let contact = false, Fn = 0, Ftx = 0, Fty = 0;
+  const tx = smp.ny, ty = -smp.nx;
+  if (pen > 0) {
+    contact = true;
+    const vn = wvx * smp.nx + wvy * smp.ny;
+    Fn = clamp(TIRE_K * pen - TIRE_C * vn, 0, TIRE_FMAX);
+    const vt = wvx * tx + wvy * ty + w.om * WHEEL_R;
+    const Ft = -MU * Fn * clamp(vt / SLIP_REF, -1, 1);
+    Ftx = tx * Ft; Fty = ty * Ft;
+    w.om += (WHEEL_R * Ft / I_W) * dt;
+    w.slip = vt; w.jn = Fn * dt;
+    if (!w.wasGround && vn < -2.5) {
+      sfx.thud(clamp(-vn / 14, 0.05, 0.6));
+      game.shake = Math.max(game.shake, clamp(-vn / 16, 0, 0.45));
+      spawnDust(wx, wy - WHEEL_R * 0.5, Math.min(10, Math.round(-vn * 1.2)));
     }
-  }
-  w.wasGround = true;
+  } else { w.jn = 0; w.slip = 0; }
+  w.wasGround = contact;
 
-  // frottement : cible = contact qui roule sans glisser
-  const tx = s.ny, ty = -s.nx; // tangente orientée vers +x
-  const vt = vx * tx + vy * ty;
-  const slip = vt + w.om * WHEEL_R;
-  const rt = rx * ty - ry * tx;
-  const Kt = 1 / M + rt * rt / I + (WHEEL_R * WHEEL_R) / I_W;
-  let jt = -slip / Kt;
-  const maxF = MU * jn;
-  jt = clamp(jt, -maxF, maxF);
-  b.vx += tx * jt / M;
-  b.vy += ty * jt / M;
-  b.om += rt * jt / I;
-  w.om += WHEEL_R * jt / I_W;
-  w.slip = slip;
-  return true;
+  // dynamique de la roue le long de l'axe de suspension :
+  // gravité + ressort + contact (composante d̂) → accélèrent la course
+  const gW = WHEEL_M * G;
+  const Fcx = smp.nx * Fn + Ftx;
+  const Fcy = smp.ny * Fn + Fty;
+  const Fd = Fs + (-gW) * dny + Fcx * dxn + Fcy * dny;
+  // composante longitudinale transmise au châssis : uniquement les efforts
+  // de contact (le poids de la roue passe par le ressort, pas par l'ancre)
+  const Ff = Fcx * fxx + Fcy * fxy;
+  w.sv += (Fd / WHEEL_M) * dt;
+
+  // transmission au châssis : réaction du ressort à l'ancre + composantes f̂
+  const Rfx = -Fs * dxn + fxx * Ff;
+  const Rfy = -Fs * dny + fxy * Ff;
+  _ch.fx += Rfx;
+  _ch.fy += Rfy;
+  _ch.tq += arx * Rfy - ary * Rfx;
+
+  // intégration de la course + butées dures
+  w.s += w.sv * dt;
+  if (w.s < SUSP_MIN) { w.s = SUSP_MIN; if (w.sv < 0) w.sv *= -0.25; }
+  if (w.s > SUSP_MAX) { w.s = SUSP_MAX; if (w.sv > 0) w.sv *= -0.25; }
+  return contact;
 }
 
 function stepPhysics(dt) {
@@ -475,23 +502,27 @@ function stepPhysics(dt) {
     for (const w of b.wheels) w.om -= clamp(w.om, -dOm, dOm);
   }
 
-  // gravité + traînée légère
-  b.vy -= G * dt;
+  // suspension + contacts roue (forces transmises au châssis via _ch)
+  _ch.fx = 0; _ch.fy = 0; _ch.tq = 0;
+  let anyContact = false;
+  for (const w of b.wheels) {
+    if (stepWheel(w, dt)) anyContact = true;
+  }
+  game.grounded = anyContact;
+
+  // traînée légère
   const sp = Math.hypot(b.vx, b.vy);
   if (sp > 0.01) {
     const k = 0.55 * sp / M;
     b.vx -= k * b.vx * dt;
     b.vy -= k * b.vy * dt;
   }
-  b.om *= 1 - 0.1 * dt;
-  b.om = clamp(b.om + (tq / I) * dt, -12, 12);
 
-  // contacts
-  let anyContact = false;
-  for (const w of b.wheels) {
-    if (solveWheel(w, dt)) anyContact = true;
-  }
-  game.grounded = anyContact;
+  // intégration du châssis : poids + efforts des roues (ressorts et contacts)
+  b.vx += (_ch.fx / M) * dt;
+  b.vy += (_ch.fy / M - G) * dt;
+  b.om += ((tq + _ch.tq) / I) * dt;
+  b.om = clamp(b.om * (1 - 0.08 * dt), -12, 12);
 
   // intégration
   b.x += b.vx * dt;
@@ -713,11 +744,12 @@ function drawBike() {
   ctx.rotate(-b.th);
   ctx.scale(k * b.dirVis, -k);
 
-  // roues
+  // roues (suspendues : position = ancre + course le long de l'axe vertical local)
   for (let i = 0; i < 2; i++) {
     const w = b.wheels[i];
+    const wly = w.ly + SUSP_REST - w.s;
     ctx.save();
-    ctx.translate(w.lx, w.ly);
+    ctx.translate(w.lx, wly);
     ctx.strokeStyle = '#23262b';
     ctx.lineWidth = 0.1;
     ctx.beginPath();
@@ -738,13 +770,16 @@ function drawBike() {
     ctx.restore();
   }
 
-  // châssis : bras oscillant, fourche, cadre, réservoir-selle
+  // châssis : bras oscillant et fourche articulés vers les roues suspendues,
+  // puis cadre, réservoir-selle
   ctx.lineCap = 'round';
+  const rly = b.wheels[0].ly + SUSP_REST - b.wheels[0].s;
+  const fly = b.wheels[1].ly + SUSP_REST - b.wheels[1].s;
   ctx.strokeStyle = '#3a4353';
   ctx.lineWidth = 0.075;
   ctx.beginPath();
-  ctx.moveTo(-0.06, -0.1); ctx.lineTo(-0.71, -0.32); // bras oscillant
-  ctx.moveTo(0.3, 0.24); ctx.lineTo(0.71, -0.32);    // fourche
+  ctx.moveTo(-0.18, -0.04); ctx.lineTo(-0.71, rly);  // bras oscillant
+  ctx.moveTo(0.3, 0.24); ctx.lineTo(0.71, fly);      // fourche télescopique
   ctx.stroke();
   ctx.strokeStyle = '#e0523f';
   ctx.lineWidth = 0.085;
