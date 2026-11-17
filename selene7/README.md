@@ -75,10 +75,11 @@ se pilote comme un vrai engin spatial :
 
 - les gyroscopes automatiques sont désactivés : le RCS n'obéit plus qu'à vos
   touches `A` / `D` (gauche / droite), avec un amortissement qui évite l'emballement ;
-- **la poussée infléchit le nez**, proportionnellement à son intensité : à pleine
-  poussée, le vaisseau part naturellement en pente — il faut contrer à l'assiette
-  ou jouer avec, comme un vrai corps dont la ligne de poussée ne passe pas
-  exactement par le centre de masse ;
+- **la poussée latérale fait pivoter le vaisseau**, d'un sens ou de l'autre selon
+  le propulseur utilisé, proportionnellement à son intensité : pousser vers la
+  droite fait pivoter le nez vers la gauche, et inversement (effet pendule — la
+  ligne de poussée passe sous le centre de masse, le haut du vaisseau prend du
+  retard). Poussée verticale (les deux propulseurs) = pas de moment de tangage ;
 - le joueur gère simultanément **vitesse, altitude et assiette** ; un instrument
   d'assiette (horizon artificiel) s'affiche en bas à gauche du HUD, avec l'angle
   en degrés et la vitesse angulaire ;
@@ -96,8 +97,9 @@ se pilote comme un vrai engin spatial :
   Une atmosphère dense ralentit la chute et permet des approches plus douces ;
 - couple réel des propulseurs (léger désaxage volontaire) compensé par un
   contrôle d'attitude à couple limité, visible à l'écran (RCS) ;
-  en mode **assiette réaliste**, ce contrôle devient manuel (`A` / `D`) et un
-  moment de tangage proportionnel à la poussée s'ajoute (`game.pitchK`) ;
+  en mode **assiette réaliste**, ce contrôle devient manuel (`A` / `D`) et la
+  poussée latérale ajoute un moment de tangage directionnel, proportionnel à
+  son intensité (`game.pitchK`) ;
 - collisions à impulsion sur un terrain en polyligne : normale de surface, restitution,
   frottement, moment angulaire ;
 - intégration à pas fixe `1/240 s` avec accumulateur, indépendante du taux de rafraîchissement.
