@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MOTO-X — Trial 2D</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" aria-label="Jeu de moto trial 2D en vue de côté"></canvas>
+
+  <div id="overlay" class="overlay">
+    <!-- ÉCRAN MENU -->
+    <section class="panel" id="panelMenu">
+      <p class="eyebrow">TRIAL 2D <span class="dot">•</span> VUE DE CÔTÉ</p>
+      <h1>MOTO<span>-X</span></h1>
+      <p class="lede">
+        Accélérez, freinez, gardez l'équilibre et enchaînez les bosses.
+        Le casque qui touche le sol, c'est la chute : le niveau redémarre à zéro.
+      </p>
+
+      <div id="levelGrid" class="lvlgrid"></div>
+
+      <div class="keyrow">
+        <span class="key">↑</span><span class="key">↓</span><span class="key">←</span>
+        <span class="key">→</span><span class="key wide">Espace</span><span class="key">R</span>
+      </div>
+      <p class="keydesc">
+        <span>↑ accélérer · ↓ freiner (2 roues)</span>
+        <span>← → équilibre de la moto</span>
+        <span>Espace demi-tour · R recommencer</span>
+      </p>
+      <p class="summary">Un niveau terminé débloque le suivant. Meilleurs temps conservés dans le navigateur.</p>
+    </section>
+
+    <!-- ÉCRAN FIN -->
+    <section class="panel hidden" id="panelFinish">
+      <p class="eyebrow">NIVEAU TERMINÉ</p>
+      <h1 class="small">Arrivée !</h1>
+      <div id="finStats" class="stats"></div>
+      <div class="actions">
+        <button id="btnMenu2" class="ghost">Menu (Échap)</button>
+        <button id="btnReplay" class="ghost">Rejouer (R)</button>
+        <button id="btnNext" class="primary">Niveau suivant (Espace)</button>
+      </div>
+    </section>
+
+    <!-- ÉCRAN PAUSE -->
+    <section class="panel hidden" id="panelPause">
+      <p class="eyebrow">MISSION EN SUSPENS</p>
+      <h1 class="small">Pause</h1>
+      <p class="lede">Le moteur tourne au ralenti. Reprenez quand vous voulez.</p>
+      <div class="actions">
+        <button id="btnPauseMenu" class="ghost">Menu (Échap)</button>
+        <button id="btnPauseRestart" class="ghost">Recommencer (R)</button>
+        <button id="btnResume" class="primary">Reprendre (P)</button>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
