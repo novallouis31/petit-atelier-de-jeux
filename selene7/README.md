@@ -22,10 +22,11 @@ Tout contact ailleurs que sur la plateforme cible (ou trop violent) détruit le 
 ## Personnalisation de la mission
 
 Depuis l'écran titre, le bouton **Personnaliser** (ou la touche `C`) ouvre la
-configuration. Deux réglages decided :
+configuration. Trois réglages :
 
 - **Le monde** : gravité, densité de l'atmosphère, ciel et textures du terrain ;
-- **Le vaisseau** : masse à sec, poussée, carburant, gabarit.
+- **Le vaisseau** : masse à sec, poussée, carburant, gabarit ;
+- **Le mode de vol** : interrupteur **« Assiette réaliste · vaisseau spatial »**.
 
 | Monde | Gravité | Atmosphère | Effet |
 | --- | --- | --- | --- |
@@ -51,6 +52,8 @@ La configuration est conservée dans le navigateur (`localStorage`, clé `selene
 | `←` | Propulseur qui pousse vers la gauche |
 | `→` | Propulseur qui pousse vers la droite |
 | `Espace` | Les deux propulseurs (poussée verticale) |
+| `A` / `Q` | RCS : piquer du nez à gauche *(mode assiette réaliste)* |
+| `D` | RCS : piquer du nez à droite *(mode assiette réaliste)* |
 | `Entrée` | Décoller (écran titre) |
 | `C` | Ouvrir / fermer la configuration |
 | `P` / `Échap` | Pause |
@@ -65,6 +68,23 @@ poussée passent par le centre de masse : un seul propulseur pousse donc en diag
 (vers le haut et sur le côté), les deux ensemble donnent une poussée verticale. C'est
 ce qui rend le pilotage intéressant : accélérer latéralement, c'est aussi monter.
 
+### Mode « assiette réaliste · vaisseau spatial »
+
+Dans ce mode (interrupteur de la configuration, désactivé par défaut), le vaisseau
+se pilote comme un vrai engin spatial :
+
+- les gyroscopes automatiques sont désactivés : le RCS n'obéit plus qu'à vos
+  touches `A` / `D` (gauche / droite), avec un amortissement qui évite l'emballement ;
+- **la poussée infléchit le nez**, proportionnellement à son intensité : à pleine
+  poussée, le vaisseau part naturellement en pente — il faut contrer à l'assiette
+  ou jouer avec, comme un vrai corps dont la ligne de poussée ne passe pas
+  exactement par le centre de masse ;
+- le joueur gère simultanément **vitesse, altitude et assiette** ; un instrument
+  d'assiette (horizon artificiel) s'affiche en bas à gauche du HUD, avec l'angle
+  en degrés et la vitesse angulaire ;
+- les tolérances d'atterrissage restent identiques : il faut se poser droit, à
+  force de corrections RCS.
+
 ## Physique
 
 - gravité et poussée **proportionnelles** au monde choisi : sur un monde plus lourd,
@@ -76,6 +96,8 @@ ce qui rend le pilotage intéressant : accélérer latéralement, c'est aussi mo
   Une atmosphère dense ralentit la chute et permet des approches plus douces ;
 - couple réel des propulseurs (léger désaxage volontaire) compensé par un
   contrôle d'attitude à couple limité, visible à l'écran (RCS) ;
+  en mode **assiette réaliste**, ce contrôle devient manuel (`A` / `D`) et un
+  moment de tangage proportionnel à la poussée s'ajoute (`game.pitchK`) ;
 - collisions à impulsion sur un terrain en polyligne : normale de surface, restitution,
   frottement, moment angulaire ;
 - intégration à pas fixe `1/240 s` avec accumulateur, indépendante du taux de rafraîchissement.
@@ -98,5 +120,6 @@ Tout est regroupé en haut de `game.js` :
 - `PLANETS` : gravité, densité d'atmosphère et palette (ciel, terrain, astroïde) ;
 - `SHIPS` : masse, poussée, carburant, traînée et gabarit ;
 - `DIFFICULTIES` : multiplicateur de carburant, taille de la piste, vitesses, relief ;
+- `game.pitchK`, `game.rcsManualK`, `game.rcsDampK` : réglages du mode assiette réaliste ;
 - `WORLD` : dimensions du monde ;
 - `genTerrain()` : forme du relief et position de la piste.

@@ -169,7 +169,10 @@ const config = {
   shipId: 'classic',
   diffId: 'normal',
   customPlanet: { gravity: 2.5, density: 0.3 },
-  customShip: { dryMass: 850, thrust: 3000, fuel: 92 }
+  customShip: { dryMass: 850, thrust: 3000, fuel: 92 },
+  // Vaisseau spatial : l'assiette n'est plus maintenue par les gyroscopes,
+  // le tangage est manuel et couple a la poussée.
+  attitudeMode: false
 };
 
 function loadConfig() {
@@ -192,6 +195,7 @@ function loadConfig() {
     config.customShip.thrust = clamp(Number(raw.customShip.thrust) || 3000, 1200, 7000);
     config.customShip.fuel = clamp(Number(raw.customShip.fuel) || 92, 40, 220);
   }
+  config.attitudeMode = !!raw.attitudeMode;
 }
 
 function saveConfig() {
@@ -545,11 +549,16 @@ const game = {
   pausedFrom: null,
   result: null,
   endTimer: 0,
-  keys: { left: false, right: false, both: false },
+  keys: { left: false, right: false, both: false, pitchL: false, pitchR: false },
   invert: false,
   invertToastAt: -99,
   thrusterLevel: 0,
-  time: 0
+  time: 0,
+  // --- vaisseau spatial : assiette realiste ---
+  attitudeMode: false,   // tangage manuel, couple a la poussee
+  pitchK: 0.22,          // moment de tangage = pitchK * poussee totale
+  rcsManualK: 1.0,       // autorite du RCS manuel (x inertie . gravite)
+  rcsDampK: 0.55         // amortissement du tangage (x inertie . gravite)
 };
 
 const ship = {
@@ -676,6 +685,7 @@ function applyMissionSetup(diff) {
   game.diff = diff;
   game.planet = planet;
   game.shipDef = shipDef;
+  game.attitudeMode = !!config.attitudeMode;
   game.thrust = shipDef.thrust * k;
   // Le carburant suit la gravité : une poussée plus forte sur un monde plus
   // lourd se paie en carburant supplémentaire, comme dans la réalité.
@@ -1006,12 +1016,27 @@ function stepPhysics(dt) {
   ship.mass = game.shipDef.dryMass + ship.fuel;
   ship.inertia = ship.mass * game.shipDef.inertiaCoef * geom.scale * geom.scale;
 
-  // stabilisation d'attitude (gyroscopes / RCS)
-  game.rcsK = 1.55 * ship.inertia * gravK;
-  game.rcsC = 1.06 * ship.inertia * gravK;
-  game.rcsMax = 0.55 * ship.inertia * gravK;
-  const rcs = clamp(-game.rcsK * ship.theta - game.rcsC * ship.omega, -game.rcsMax, game.rcsMax);
+  // assiette : gyroscopes automatiques (atterrisseur) ou tangage manuel
+  // couple a la poussee (vaisseau spatial)
+  let rcs = 0;
+  if (game.attitudeMode) {
+    game.rcsK = 0;
+    game.rcsC = 0;
+    game.rcsMax = game.rcsManualK * ship.inertia * gravK;
+    const cmdPitch = (game.keys.pitchL ? 1 : 0) - (game.keys.pitchR ? 1 : 0);
+    // la ligne de poussee passe sous le centre de masse : la poussee
+    // infléchit le nez vers la droite, proportionnellement a son intensite.
+    _step.torque -= game.pitchK * (cmdLeft + cmdRight) * game.thrust * geom.scale;
+    const damp = game.rcsDampK * ship.inertia * gravK;
+    rcs = clamp(cmdPitch * game.rcsMax - damp * ship.omega, -game.rcsMax, game.rcsMax);
+  } else {
+    game.rcsK = 1.55 * ship.inertia * gravK;
+    game.rcsC = 1.06 * ship.inertia * gravK;
+    game.rcsMax = 0.55 * ship.inertia * gravK;
+    rcs = clamp(-game.rcsK * ship.theta - game.rcsC * ship.omega, -game.rcsMax, game.rcsMax);
+  }
   const torqueTotal = _step.torque + rcs;
+  game.rcsOut = rcs;
   ship.omega += (torqueTotal / ship.inertia) * dt;
   ship.omega = clamp(ship.omega, -3, 3);
 
@@ -1680,7 +1705,7 @@ function drawShip() {
   ctx.fill();
 
   // RCS visuel
-  const rcs = clamp(-game.rcsK * ship.theta - game.rcsC * ship.omega, -game.rcsMax, game.rcsMax);
+  const rcs = clamp(game.rcsOut || 0, -game.rcsMax, game.rcsMax);
   if (Math.abs(rcs) > game.rcsMax * 0.18) {
     const side = rcs > 0 ? -1 : 1;
     const puff = 0.4 + 0.6 * Math.random();
@@ -1882,6 +1907,68 @@ function fmtSpeed(v) {
   return (s > 0 ? '+' : '') + s.toFixed(2);
 }
 
+/* --- indicateur d'assiette (vaisseau spatial) --- */
+function drawAttitudeGauge() {
+  if (!game.attitudeMode) return;
+  const small = W < 760;
+  const dw = small ? 200 : 228;
+  const dh = 131;
+  const gw = small ? 104 : 132;
+  const gx = 16 + dw + 18;
+  const gy = H - 16 - dh;
+  panelBox(gx, gy, gw, dh);
+  hudText('ASSIETTE', gx + 12, gy + 18, 9.5, COL.muted, 'left', 600);
+  hudText('VAISSEAU', gx + gw - 12, gy + 18, 8.5, COL.accent, 'right', 600);
+
+  const cx = gx + gw / 2;
+  const cy = gy + 56;
+  const r = Math.min(gw, 74) / 2 - 6;
+  const deg = ship.theta * DEG;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, TAU);
+  ctx.clip();
+  ctx.translate(cx, cy);
+  ctx.rotate(ship.theta);
+  ctx.fillStyle = 'rgba(110,180,235,0.26)';
+  ctx.fillRect(-2 * r, -2 * r, 4 * r, 2 * r);
+  ctx.fillStyle = 'rgba(126,112,86,0.34)';
+  ctx.fillRect(-2 * r, 0, 4 * r, 2 * r);
+  ctx.strokeStyle = 'rgba(232,242,255,0.9)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(-2 * r, 0);
+  ctx.lineTo(2 * r, 0);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle = 'rgba(150,190,220,0.45)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, TAU);
+  ctx.stroke();
+
+  // repère du vaisseau (fixe)
+  ctx.strokeStyle = COL.accent;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 13, cy); ctx.lineTo(cx - 5, cy);
+  ctx.moveTo(cx + 5, cy); ctx.lineTo(cx + 13, cy);
+  ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy - 2.5);
+  ctx.stroke();
+
+  hudText(`${deg >= 0 ? '+' : ''}${deg.toFixed(1)}°`, cx, gy + 94, 13,
+    Math.abs(deg) > game.tolTilt ? COL.red : COL.ink, 'center', 700);
+  hudText(`V.ANG ${(ship.omega * DEG).toFixed(0)}°/s`, cx, gy + 110, 8.5, COL.dim, 'center', 500);
+
+  // commandes de tangage
+  const pl = game.keys.pitchL ? 1 : 0;
+  const pr = game.keys.pitchR ? 1 : 0;
+  hudText('A', gx + 16, gy + dh - 10, 9, pl ? COL.accent : COL.dim, 'center', 700);
+  hudText('D', gx + gw - 16, gy + dh - 10, 9, pr ? COL.accent : COL.dim, 'center', 700);
+}
+
 function drawHUD() {
   if (game.mode === 'title' || game.mode === 'config') return;
   const small = W < 760;
@@ -1949,6 +2036,9 @@ function drawHUD() {
     hudText(r.v, dx + dw - 12, ry, 11, r.c, 'right', 600);
   });
 
+  /* --- assiette (vaisseau spatial) --- */
+  drawAttitudeGauge();
+
   /* --- propulseurs --- */
   const tw = small ? 170 : 196, th = 84;
   const tx = W - 16 - tw, ty = H - 16 - th;
@@ -2013,7 +2103,10 @@ function drawHUD() {
   if (game.mode === 'flying' && game.missionTime < 16) {
     const a = clamp(1 - Math.max(0, game.missionTime - 11) / 5, 0, 1) * 0.65;
     ctx.globalAlpha = a;
-    hudText('← →  POUSSÉE LATÉRALE    ·    ESPACE  LES DEUX    ·    P  PAUSE', W / 2, H - 18, 10, COL.muted, 'center', 500);
+    const hint = game.attitudeMode
+      ? '← →  POUSSÉE LATÉRALE    ·    ESPACE  LES DEUX    ·    A / D  TANGAGE    ·    P  PAUSE'
+      : '← →  POUSSÉE LATÉRALE    ·    ESPACE  LES DEUX    ·    P  PAUSE';
+    hudText(hint, W / 2, H - 18, 10, COL.muted, 'center', 500);
     ctx.globalAlpha = 1;
   }
 }
@@ -2161,6 +2254,8 @@ function clearKeys() {
   game.keys.left = false;
   game.keys.right = false;
   game.keys.both = false;
+  game.keys.pitchL = false;
+  game.keys.pitchR = false;
   game.thrusterLevel = 0;
   sfx.setEngine(0);
 }
@@ -2248,7 +2343,8 @@ function configSummaryText() {
   return `MONDE · ${p.name} — gravité ${fmtNum(p.gravity)} m/s², atmosphère ${atmoLabel(p.density).toLowerCase()}` +
          ` (${fmtNum(p.density)} kg/m³)<br>` +
          `VAISSEAU · ${s.name} — ${s.dryMass} kg à sec, ${s.thrust} N par propulseur<br>` +
-         `DIFFICULTÉ · ${game.diff.label}`;
+         `DIFFICULTÉ · ${game.diff.label}` +
+         (config.attitudeMode ? '<br>MODE · assiette réaliste — tangage manuel A / D' : '');
 }
 
 function updateTitleSummary() {
@@ -2313,6 +2409,8 @@ function renderConfigUI() {
 
   const stats = el('shipStats');
   if (stats) stats.innerHTML = shipStatsHTML();
+  const att = el('attitudeToggle');
+  if (att) att.checked = !!config.attitudeMode;
   const sum = el('configSummary');
   if (sum) sum.innerHTML = configSummaryText();
 
@@ -2373,6 +2471,8 @@ window.addEventListener('keydown', (e) => {
       if (k === 'ArrowLeft') game.keys.left = true;
       if (k === 'ArrowRight') game.keys.right = true;
       if (k === ' ' || k === 'Spacebar') game.keys.both = true;
+      if (k === 'a' || k === 'A' || k === 'q' || k === 'Q') game.keys.pitchL = true;
+      if (k === 'd' || k === 'D') game.keys.pitchR = true;
     }
     return;
   }
@@ -2401,6 +2501,9 @@ window.addEventListener('keydown', (e) => {
       game.keys.left = false;
       game.keys.right = false;
     }
+    // vaisseau spatial : tangage manuel
+    if (k === 'a' || k === 'A' || k === 'q' || k === 'Q') game.keys.pitchL = true;
+    if (k === 'd' || k === 'D') game.keys.pitchR = true;
     if (k === 'p' || k === 'P' || k === 'Escape') pauseGame();
     else if (k === 'r' || k === 'R') retryMission();
     return;
@@ -2439,6 +2542,8 @@ window.addEventListener('keyup', (e) => {
   if (k === 'ArrowLeft') game.keys.left = false;
   if (k === 'ArrowRight') game.keys.right = false;
   if (k === ' ' || k === 'Spacebar') game.keys.both = false;
+  if (k === 'a' || k === 'A' || k === 'q' || k === 'Q') game.keys.pitchL = false;
+  if (k === 'd' || k === 'D') game.keys.pitchR = false;
 });
 
 window.addEventListener('blur', () => {
@@ -2500,6 +2605,21 @@ if (invertBtn) {
   invertBtn.addEventListener('click', () => {
     setInvert(!game.invert, true);
     invertBtn.blur();
+  });
+}
+
+/* --- interrupteur « assiette réaliste » (vaisseau spatial) --- */
+
+const attitudeToggle = el('attitudeToggle');
+if (attitudeToggle) {
+  attitudeToggle.addEventListener('change', () => {
+    config.attitudeMode = attitudeToggle.checked;
+    saveConfig();
+    applyConfigChange();
+    updateTitleSummary();
+    sfx.init();
+    sfx.blip();
+    attitudeToggle.blur();
   });
 }
 
