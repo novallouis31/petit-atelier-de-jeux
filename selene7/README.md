@@ -75,11 +75,11 @@ se pilote comme un vrai engin spatial :
 
 - les gyroscopes automatiques sont désactivés : le RCS n'obéit plus qu'à vos
   touches `A` / `D` (gauche / droite), avec un amortissement qui évite l'emballement ;
-- **la poussée latérale fait pivoter le vaisseau**, d'un sens ou de l'autre selon
-  le propulseur utilisé, proportionnellement à son intensité : pousser vers la
-  droite fait pivoter le nez vers la gauche, et inversement (effet pendule — la
-  ligne de poussée passe sous le centre de masse, le haut du vaisseau prend du
-  retard). Poussée verticale (les deux propulseurs) = pas de moment de tangage ;
+- **la poussée latérale incline le vaisseau dans le sens de sa poussée**,
+  proportionnellement à son intensité : pousser vers la droite fait pivoter le
+  nez vers la droite, et inversement — le vaisseau s'incline là où il va, et il
+  faut corriger l'assiette (`A` / `D`) pour garder la trajectoire. La poussée
+  verticale (les deux propulseurs) ne crée pas de moment de tangage ;
 - le joueur gère simultanément **vitesse, altitude et assiette** ; un instrument
   d'assiette (horizon artificiel) s'affiche en bas à gauche du HUD, avec l'angle
   en degrés et la vitesse angulaire ;

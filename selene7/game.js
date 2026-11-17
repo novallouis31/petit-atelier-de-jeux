@@ -1024,12 +1024,11 @@ function stepPhysics(dt) {
     game.rcsC = 0;
     game.rcsMax = game.rcsManualK * ship.inertia * gravK;
     const cmdPitch = (game.keys.pitchL ? 1 : 0) - (game.keys.pitchR ? 1 : 0);
-    // La ligne de poussée passe sous le centre de masse : la poussée latérale
-    // fait pivoter le vaisseau, d'un sens ou de l'autre selon le propulseur
-    // (effet pendule) — pousser vers la droite fait pivoter le nez vers la
-    // gauche, et inversement. Proportionnel à l'intensité de la poussée.
+    // La poussée latérale incline le vaisseau dans le sens de sa poussée :
+    // pousser vers la droite fait pivoter le nez vers la droite, pousser vers
+    // la gauche vers la gauche (proportionnellement à l'intensité de la poussée).
     if (ship.fuel > 0) {
-      _step.torque += game.pitchK * (cmdRight - cmdLeft) * game.thrust * geom.scale;
+      _step.torque += game.pitchK * (cmdLeft - cmdRight) * game.thrust * geom.scale;
     }
     const damp = game.rcsDampK * ship.inertia * gravK;
     rcs = clamp(cmdPitch * game.rcsMax - damp * ship.omega, -game.rcsMax, game.rcsMax);
